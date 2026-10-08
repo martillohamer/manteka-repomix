@@ -2,6 +2,7 @@ import process from 'node:process';
 import { Command } from 'commander';
 import { getVersion } from '../core/file/packageJsonParse.js';
 import { handleError } from '../shared/errorHandle.js';
+import { registerDashboardCommand } from './commands/dashboardCommand.js';
 import { registerEvolveCommand } from './commands/evolveCommand.js';
 import { registerStatusCommand } from './commands/statusCommand.js';
 import { registerWatchCommand } from './commands/watchCommand.js';
@@ -19,6 +20,7 @@ export const createMantekaProgram = (): Command => {
   registerEvolveCommand(program);
   registerStatusCommand(program);
   registerWatchCommand(program);
+  registerDashboardCommand(program);
   return program;
 };
 

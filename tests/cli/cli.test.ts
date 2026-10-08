@@ -34,7 +34,12 @@ const subcommand = (program: Command, name: string): Command => {
 
 describe('manteka command parsing', () => {
   it('exposes the evolve, status and watch commands', () => {
-    expect(buildProgram().commands.map((command) => command.name())).toEqual(['evolve', 'status', 'watch']);
+    expect(buildProgram().commands.map((command) => command.name())).toEqual([
+      'evolve',
+      'status',
+      'watch',
+      'dashboard',
+    ]);
   });
 
   it('routes manteka evolve with its documented options', async () => {

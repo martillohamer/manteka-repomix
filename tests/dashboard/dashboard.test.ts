@@ -1,10 +1,15 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { Command } from 'commander';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { registerDashboardCommand } from '../../src/cli/commands/dashboardCommand.js';
+import { createMantekaProgram } from '../../src/cli/index.js';
 import { createDashboardServer, type DashboardServerHandle } from '../../src/dashboard/server.js';
 import { type DashboardSnapshot, gatherSnapshot } from '../../src/dashboard/snapshot.js';
 import { dashboardHtml } from '../../src/dashboard/ui.js';
+
+vi.mock('../../src/shared/logger');
 
 describe('gatherSnapshot', () => {
   it('reports a cold start when nothing has run yet', async () => {
@@ -325,5 +330,70 @@ describe('dashboard server', () => {
     await server.close();
     await expect(fetch(`${baseUrl}/api/status`)).rejects.toThrow();
     await expect(server.close()).resolves.toBeUndefined();
+  });
+});
+
+describe('manteka dashboard command', () => {
+  const buildProgram = (): Command => {
+    const program = new Command();
+    program.exitOverride();
+    program.configureOutput({ writeOut: () => {}, writeErr: () => {} });
+    registerDashboardCommand(program);
+    return program;
+  };
+
+  it('defaults to port 3838 and the current directory', async () => {
+    const program = buildProgram();
+    let directory = '';
+    let captured: { port?: number } = {};
+    program.commands[0].action((value: string, options: { port?: number }) => {
+      directory = value;
+      captured = options;
+    });
+
+    await program.parseAsync(['node', 'manteka', 'dashboard']);
+
+    expect(directory).toBe('.');
+    expect(captured.port).toBe(3838);
+  });
+
+  it('accepts a custom port and directory', async () => {
+    const program = buildProgram();
+    let directory = '';
+    let captured: { port?: number } = {};
+    program.commands[0].action((value: string, options: { port?: number }) => {
+      directory = value;
+      captured = options;
+    });
+
+    await program.parseAsync(['node', 'manteka', 'dashboard', 'some/repo', '--port', '4000']);
+
+    expect(directory).toBe('some/repo');
+    expect(captured.port).toBe(4000);
+  });
+
+  it('rejects ports outside the valid range', async () => {
+    const program = buildProgram();
+    program.commands[0].action(() => {});
+
+    await expect(program.parseAsync(['node', 'manteka', 'dashboard', '--port', '0'])).rejects.toThrow(
+      /between 1 and 65535/,
+    );
+    await expect(program.parseAsync(['node', 'manteka', 'dashboard', '--port', '70000'])).rejects.toThrow(
+      /between 1 and 65535/,
+    );
+  });
+
+  it('rejects a non-numeric port', async () => {
+    const program = buildProgram();
+    program.commands[0].action(() => {});
+
+    await expect(program.parseAsync(['node', 'manteka', 'dashboard', '--port', 'abc'])).rejects.toThrow(
+      /between 1 and 65535/,
+    );
+  });
+
+  it('is registered on the manteka program alongside evolve, status and watch', () => {
+    expect(createMantekaProgram().commands.map((command) => command.name())).toContain('dashboard');
   });
 });

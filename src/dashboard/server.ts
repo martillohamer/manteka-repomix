@@ -7,7 +7,7 @@ import { EVOLUTION_REPORT_FILE_NAME } from '../biomimicry/report.js';
 import { LAWS_FILE_NAME } from '../biomimicry/semanticGuardian.js';
 import { logger } from '../shared/logger.js';
 import { MEMORY_DIRECTORY } from '../thermodynamics/report.js';
-import { type DashboardSnapshot, gatherSnapshot } from './snapshot.js';
+import type { DashboardSnapshot } from './snapshot.js';
 import { dashboardHtml } from './ui.js';
 
 export type DashboardEventType = 'heartbeat' | 'snapshot' | 'mutation' | 'guardian' | 'lineage';
@@ -45,10 +45,10 @@ export const createDashboardServer = (deps: DashboardDeps): DashboardServerHandl
   const heartbeatMs = deps.heartbeatMs ?? 1000;
   const now = deps.now ?? (() => Date.now());
   const clients = new Set<http.ServerResponse>();
-  const watcher: FSWatcher | null = null;
-  const heartbeatTimer: NodeJS.Timeout | null = null;
-  const changeTimer: NodeJS.Timeout | null = null;
-  const watching = false;
+  let watcher: FSWatcher | null = null;
+  let heartbeatTimer: NodeJS.Timeout | null = null;
+  let changeTimer: NodeJS.Timeout | null = null;
+  let watching = false;
   let listening = false;
   let closed = false;
 
@@ -107,7 +107,7 @@ export const createDashboardServer = (deps: DashboardDeps): DashboardServerHandl
         void deps
           .gatherSnapshot()
           .then((snapshot) => send(res, 'snapshot', snapshot))
-          .catch(() => undefined);
+          .catch((error: unknown) => logger.error(`Dashboard initial snapshot failed: ${(error as Error).message}`));
         return;
       }
 
@@ -146,6 +146,42 @@ export const createDashboardServer = (deps: DashboardDeps): DashboardServerHandl
       });
     });
     listening = true;
+
+    heartbeatTimer = setInterval(() => {
+      emit('heartbeat', { at: now() });
+    }, heartbeatMs);
+
+    const watchFn = deps.watch ?? (await import('chokidar')).watch;
+    const root = deps.root;
+    watcher = watchFn(root, {
+      ignoreInitial: true,
+      awaitWriteFinish: { stabilityThreshold: 100 },
+      ignored: (target: string) => target !== root && !isDashboardDataPath(root, target),
+    });
+    watching = true;
+
+    const classify = (target: string): DashboardEventType | null => {
+      const name = path.basename(target);
+      if (name === LAWS_FILE_NAME) return 'guardian';
+      if (name === LINEAGE_FILE_NAME) return 'lineage';
+      if (name === EVOLUTION_REPORT_FILE_NAME) return 'mutation';
+      return null;
+    };
+
+    const onFsEvent = (target: string): void => {
+      const kind = classify(target);
+      if (kind !== null) {
+        emit(kind, { file: path.basename(target), at: now() });
+      }
+      if (changeTimer !== null) clearTimeout(changeTimer);
+      changeTimer = setTimeout(() => {
+        changeTimer = null;
+        broadcastSnapshot();
+      }, 150);
+    };
+
+    watcher.on('change', onFsEvent);
+    watcher.on('add', onFsEvent);
 
     const address = server.address() as AddressInfo;
     return { port: address.port, url: `http://127.0.0.1:${address.port}` };
