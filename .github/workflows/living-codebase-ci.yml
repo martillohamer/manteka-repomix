@@ -1,0 +1,118 @@
+name: Living Codebase CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  living-codebase:
+    name: Living Codebase
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Validate init-living-codebase.sh
+        run: |
+          set -euo pipefail
+          LCB_TMP="$(mktemp -d)"
+          trap 'rm -rf "$LCB_TMP"' EXIT
+          cp scripts/init-living-codebase.sh "$LCB_TMP/"
+          chmod +x "$LCB_TMP/init-living-codebase.sh"
+          cd "$LCB_TMP"
+          ./init-living-codebase.sh -t 400
+          for artifact in \
+            .manteka-memory \
+            .manteka-memory/history.log \
+            .manteka-memory/living-codebase-status.md \
+            .manteka-memory/health-report.json \
+            .gitignore
+          do
+            if [ ! -e "$artifact" ]; then
+              echo "::error::el script no creo $artifact"
+              exit 1
+            fi
+            echo "ok: $artifact"
+          done
+
+      - name: Audit production sources (400-line ratchet)
+        run: |
+          set -euo pipefail
+          LIMIT=400
+
+          # Baseline temporal de deuda historica en src/.
+          # Formato: ruta|lineas_maximas|descripcion
+          # Regla del ratchet:
+          #   grew sobre el maximo  -> ERROR (la deuda no puede crecer)
+          #   igual al maximo        -> AVISO (deuda congelada)
+          #   por debajo del maximo  -> OK     (deuda reducida: baja el valor)
+          # Cuando un fichero se de base por pagado, borra su entrada.
+          read -r -d '' BASELINE <<'BASELINE_EOF' || true
+          src/core/file/fileSearch.ts|549|refactorizar: busqueda de ficheros
+          src/cli/actions/defaultAction.ts|504|refactorizar: accion por defecto
+          src/cli/cliRun.ts|466|refactorizar: orquestacion CLI
+          src/core/output/outputGenerate.ts|450|refactorizar: generacion de salida
+          BASELINE_EOF
+
+          VIOLATIONS=0
+          REGRESSIONS=0
+          SCANNED=0
+
+          echo "--- Baseline de deuda historica ---"
+          while IFS='|' read -r path max desc; do
+            [ -n "${path:-}" ] || continue
+            if [ ! -e "$path" ]; then
+              echo "AVISO  ${path}: ya no existe, la deuda esta pagada -> borra la entrada del baseline"
+              continue
+            fi
+            lines="$(wc -l < "$path" | tr -d ' ')"
+            if [ "$lines" -gt "$max" ]; then
+              echo "ERROR  ${path}: ${lines} lineas REGRESIONA sobre el baseline de ${max} (${desc})"
+              REGRESSIONS=$((REGRESSIONS + 1))
+            elif [ "$lines" -eq "$max" ]; then
+              echo "AVISO  ${path}: ${lines} lineas, deuda sin reducir (${desc})"
+            else
+              echo "OK     ${path}: ${lines} lineas, por debajo del baseline de ${max} -> actualiza el baseline (${desc})"
+            fi
+          done <<< "$BASELINE"
+
+          echo ""
+          echo "--- Auditoria de src/ (tests/ excluido a proposito) ---"
+          while IFS= read -r -d '' file; do
+            SCANNED=$((SCANNED + 1))
+            if printf '%s\n' "$BASELINE" | cut -d'|' -f1 | grep -qxF "$file"; then
+              continue
+            fi
+            lines="$(wc -l < "$file" | tr -d ' ')"
+            if [ "$lines" -gt "$LIMIT" ]; then
+              echo "ERROR  ${file}: ${lines} lineas excede el limite de ${LIMIT}"
+              VIOLATIONS=$((VIOLATIONS + 1))
+            fi
+          done < <(find src -type f \( -name '*.ts' -o -name '*.js' -o -name '*.tsx' -o -name '*.jsx' \) -print0)
+
+          echo ""
+          echo "Ficheros en src/: ${SCANNED} | Violaciones nuevas: ${VIOLATIONS} | Regresiones de baseline: ${REGRESSIONS}"
+          if [ $((VIOLATIONS + REGRESSIONS)) -ne 0 ]; then
+            echo "::error::${VIOLATIONS} violacion(es) nueva(s) y ${REGRESSIONS} regresion(es) sobre el limite de ${LIMIT} lineas"
+            exit 1
+          fi
+          echo "::notice::limite de ${LIMIT} lineas respetado en src/"

@@ -1,0 +1,480 @@
+---
+title: 配置
+description: 使用 JSON、JSONC、JSON5、JavaScript 或 TypeScript 文件配置 Repomix，包括输出格式、包含和忽略模式以及高级选项。
+---
+
+# 配置
+
+Repomix 可以通过配置文件或命令行选项进行配置。配置文件允许你自定义代码库的处理和输出方式。
+
+## 配置文件格式
+
+Repomix 支持多种配置文件格式，以提供灵活性和易用性。
+
+Repomix 将按以下优先级自动搜索配置文件：
+
+1. **TypeScript** (`repomix.config.ts`, `repomix.config.mts`, `repomix.config.cts`)
+2. **JavaScript/ES Module** (`repomix.config.js`, `repomix.config.mjs`, `repomix.config.cjs`)
+3. **JSON** (`repomix.config.json5`, `repomix.config.jsonc`, `repomix.config.json`)
+
+### JSON 配置
+
+在项目目录中创建配置文件：
+```bash
+repomix --init
+```
+
+这将创建一个带有默认设置的 `repomix.config.json` 文件。你还可以创建一个全局配置文件，在找不到本地配置时将使用它作为后备：
+
+```bash
+repomix --init --global
+```
+
+### TypeScript 配置
+
+TypeScript 配置文件提供最佳的开发体验，具有完整的类型检查和 IDE 支持。
+
+**安装：**
+
+要使用带有 `defineConfig` 的 TypeScript 或 JavaScript 配置，你需要将 Repomix 安装为开发依赖：
+
+```bash
+npm install -D repomix
+```
+
+**示例：**
+
+```typescript
+// repomix.config.ts
+import { defineConfig } from 'repomix';
+
+export default defineConfig({
+  output: {
+    filePath: 'output.xml',
+    style: 'xml',
+    removeComments: true,
+  },
+  ignore: {
+    customPatterns: ['**/node_modules/**', '**/dist/**'],
+  },
+});
+```
+
+**优势：**
+- ✅ IDE 中的完整 TypeScript 类型检查
+- ✅ 出色的 IDE 自动完成和 IntelliSense
+- ✅ 使用动态值（时间戳、环境变量等）
+
+**动态值示例：**
+
+```typescript
+// repomix.config.ts
+import { defineConfig } from 'repomix';
+
+// 生成基于时间戳的文件名
+const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+
+export default defineConfig({
+  output: {
+    filePath: `output-${timestamp}.xml`,
+    style: 'xml',
+  },
+});
+```
+
+### JavaScript 配置
+
+JavaScript 配置文件的工作方式与 TypeScript 相同，支持 `defineConfig` 和动态值。
+
+## 配置选项
+
+| 选项                             | 说明                                                                                                                         | 默认值                 |
+|----------------------------------|------------------------------------------------------------------------------------------------------------------------------|------------------------|
+| `input.maxFileSize`              | 要处理的最大文件大小（字节）。超过此大小的文件将被跳过。用于排除大型二进制文件或数据文件                                  | `50000000`            |
+| `input.processors`               | `{ pattern, command, timeout?, onError? }` 条目的有序数组，在打包前运行外部命令来转换匹配的文件（例如 JSON→TOON）。第一个匹配的 glob 优先。由于会运行任意命令，因此仅在本地 CLI 运行时(以及使用 `--remote-trust-config` 的远程仓库)启用。参见[文件处理器](#文件处理器) | 未设置                 |
+| `output.filePath`                | 输出文件名。支持 XML、Markdown 和纯文本格式                                                                                   | `"repomix-output.xml"` |
+| `output.style`                   | 输出样式（`xml`、`markdown`、`json`、`plain`）。每种格式对不同的 AI 工具都有其优势                                                   | `"xml"`                |
+| `output.filePathStyle`           | 输出中文件路径的显示方式（`target-relative` 表示路径相对于各目标根目录，`cwd-relative` 表示路径相对于当前工作目录）                  | `"target-relative"`    |
+| `output.parsableStyle`           | 是否根据所选样式模式转义输出。可以提供更好的解析，但可能会增加 token 数量                                                    | `false`                |
+| `output.compress`                | 是否使用 Tree-sitter 执行智能代码提取，在保持结构的同时减少 token 数量                                                         | `false`                |
+| `output.patterns`                | 按文件设置包含级别。一个有序的 `{ pattern, compress?, directoryStructureOnly? }` 条目数组；第一个匹配的 glob 优先，并为该文件覆盖全局的 `output.compress`。参见[按文件设置包含级别](#按文件设置包含级别) | 未设置                 |
+| `output.headerText`              | 要包含在文件头部的自定义文本。对于为 AI 工具提供上下文或指令很有用                                                          | `null`                 |
+| `output.instructionFilePath`     | 包含用于 AI 处理的详细自定义指令的文件路径                                                                                   | `null`                 |
+| `output.fileSummary`             | 是否在输出开头包含显示文件计数、大小和其他指标的摘要部分                                                                   | `true`                 |
+| `output.directoryStructure`      | 是否在输出中包含目录结构。帮助 AI 理解项目组织                                                                               | `true`                 |
+| `output.files`                   | 是否在输出中包含文件内容。设置为 false 时只包含结构和元数据                                                                  | `true`                 |
+| `output.removeComments`          | 是否从支持的文件类型中删除注释。可以减少噪音和 token 数量                                                                    | `false`                |
+| `output.removeEmptyLines`        | 是否从输出中删除空行以减少 token 数量                                                                                         | `false`                |
+| `output.showLineNumbers`         | 是否为每行添加行号。有助于引用代码的特定部分                                                                               | `false`                |
+| `output.truncateBase64`          | 是否截断长的 base64 数据字符串（例如图像）以减少 token 数量                                                                      | `false`                |
+| `output.copyToClipboard`         | 是否除了保存文件外还将输出复制到系统剪贴板                                                                                 | `false`                |
+| `output.splitOutput`             | 按每部分最大大小将输出拆分为多个编号文件（例如，`1000000` 表示约 1MB）。CLI 接受可读大小如 `500kb` 或 `2mb`。使每个文件保持在限制以下，并避免跨部分拆分源文件 | 未设置 |
+| `output.tokenBudget`             | 当打包输出超过此 token 数量时以非零退出码失败。作为 CI/agent 上下文限制的防护；输出仍会生成 | 未设置 |
+| `output.topFilesLength`          | 在摘要中显示的顶部文件数量。如果设置为 0，则不显示摘要                                                                      | `5`                    |
+| `output.includeEmptyDirectories` | 是否在仓库结构中包含空目录                                                                                                 | `false`                |
+| `output.includeFullDirectoryStructure` | 使用 `include` 模式时，是否显示完整的目录树（遵守 ignore 模式）同时仅处理包含的文件。为 AI 分析提供完整的仓库上下文 | `false`                |
+| `output.git.sortByChanges`       | 是否按 Git 更改次数对文件进行排序。更改较多的文件显示在底部                                                                 | `true`                 |
+| `output.git.sortByChangesMaxCommits` | 分析 Git 更改时要分析的最大提交数。限制历史深度以提高性能                                                               | `100`                  |
+| `output.git.includeDiffs`        | 是否在输出中包含 Git 差异。分别显示工作树和暂存区的更改                                                                     | `false`                |
+| `output.git.includeLogs`         | 是否在输出中包含 Git 日志。显示提交历史的日期、消息和文件路径                                                              | `false`                |
+| `output.git.includeLogsCount`    | 要包含的 Git 日志提交数量。限制历史深度以了解开发规律                                                                      | `50`                   |
+| `include`                        | 要包含的文件模式（使用 [glob 模式](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax)）                 | `[]`                   |
+| `ignore.useGitignore`            | 是否使用项目的 `.gitignore` 文件中的模式                                                                                     | `true`                 |
+| `ignore.useDotIgnore`            | 是否使用项目的 `.ignore` 文件中的模式                                                                                        | `true`                 |
+| `ignore.useDefaultPatterns`      | 是否使用默认忽略模式（node_modules、.git 等）                                                                              | `true`                 |
+| `ignore.customPatterns`          | 额外的忽略模式（使用 [glob 模式](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax)）                   | `[]`                   |
+| `security.enableSecurityCheck`   | 是否使用 Secretlint 执行安全检查以检测敏感信息                                                                              | `true`                 |
+| `tokenCount.encoding`            | OpenAI 兼容的 token 计数编码（GPT-4o 使用 `o200k_base`，GPT-4/3.5 使用 `cl100k_base`）。使用 [gpt-tokenizer](https://github.com/nicolo-ribaudo/gpt-tokenizer)。 | `"o200k_base"`         |
+
+配置文件支持 [JSON5](https://json5.org/) 语法，允许：
+- 注释（单行和多行）
+- 对象和数组中的尾随逗号
+- 无引号属性名
+- 更灵活的字符串语法
+
+## 模式验证
+
+你可以通过添加 `$schema` 属性为配置文件启用模式验证：
+
+```json
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "output": {
+    "filePath": "repomix-output.md",
+    "style": "markdown"
+  }
+}
+```
+
+这在支持 JSON 模式的编辑器中提供自动完成和验证功能。
+
+## 配置文件示例
+
+以下是完整配置文件（`repomix.config.json`）的示例：
+
+```json
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "input": {
+    "maxFileSize": 50000000,
+    // "processors": [
+    //   { "pattern": "**/*.json", "command": "npx @toon-format/cli {file}" }
+    // ]
+  },
+  "output": {
+    "filePath": "repomix-output.xml",
+    "style": "xml",
+    "filePathStyle": "target-relative",
+    "parsableStyle": false,
+    "compress": false,
+    "headerText": "打包文件的自定义头部信息",
+    "fileSummary": true,
+    "directoryStructure": true,
+    "files": true,
+    "removeComments": false,
+    "removeEmptyLines": false,
+    "topFilesLength": 5,
+    "showLineNumbers": false,
+    // "patterns": [
+    //   { "pattern": "docs/**/*", "compress": true },
+    //   { "pattern": "website/**/*", "directoryStructureOnly": true }
+    // ],
+    "truncateBase64": false,
+    "copyToClipboard": false,
+    "includeEmptyDirectories": false,
+    "git": {
+      "sortByChanges": true,
+      "sortByChangesMaxCommits": 100,
+      "includeDiffs": false,
+      "includeLogs": false,
+      "includeLogsCount": 50
+    }
+  },
+  "include": ["**/*"],
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true,
+    // 模式也可以在 .repomixignore 中指定
+    "customPatterns": [
+      "additional-folder",
+      "**/*.log"
+    ],
+  },
+  "security": {
+    "enableSecurityCheck": true
+  },
+  "tokenCount": {
+    "encoding": "o200k_base"
+  }
+}
+```
+
+## 配置文件位置
+
+Repomix 按以下顺序查找配置文件：
+1. 当前目录中的本地配置文件（优先级：TS > JS > JSON）
+   - TypeScript: `repomix.config.ts`, `repomix.config.mts`, `repomix.config.cts`
+   - JavaScript: `repomix.config.js`, `repomix.config.mjs`, `repomix.config.cjs`
+   - JSON: `repomix.config.json5`, `repomix.config.jsonc`, `repomix.config.json`
+2. 全局配置文件（优先级：TS > JS > JSON）
+   - Windows：
+     - TypeScript: `%LOCALAPPDATA%\Repomix\repomix.config.ts`, `.mts`, `.cts`
+     - JavaScript: `%LOCALAPPDATA%\Repomix\repomix.config.js`, `.mjs`, `.cjs`
+     - JSON: `%LOCALAPPDATA%\Repomix\repomix.config.json5`, `.jsonc`, `.json`
+   - macOS/Linux：
+     - TypeScript: `~/.config/repomix/repomix.config.ts`, `.mts`, `.cts`
+     - JavaScript: `~/.config/repomix/repomix.config.js`, `.mjs`, `.cjs`
+     - JSON: `~/.config/repomix/repomix.config.json5`, `.jsonc`, `.json`
+
+命令行选项优先于配置文件设置。
+
+## 包含模式
+
+Repomix 支持使用 [glob 模式](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax)指定要包含的文件。这允许更灵活和强大的文件选择：
+
+- 使用 `**/*.js` 包含任何目录中的所有 JavaScript 文件
+- 使用 `src/**/*` 包含 `src` 目录及其子目录中的所有文件
+- 组合多个模式，如 `["src/**/*.js", "**/*.md"]` 以包含 `src` 中的 JavaScript 文件和所有 Markdown 文件
+
+你可以在配置文件中指定包含模式：
+
+```json
+{
+  "include": ["src/**/*", "tests/**/*.test.js"]
+}
+```
+
+或使用 `--include` 命令行选项进行一次性过滤。
+
+## 忽略模式
+
+Repomix 提供多种方法来设置忽略模式，以在打包过程中排除特定文件或目录：
+
+- **.gitignore**：默认情况下，使用项目的 `.gitignore` 文件和 `.git/info/exclude` 中列出的模式。此行为可以通过 `ignore.useGitignore` 设置或 `--no-gitignore` CLI 选项控制。
+- **.ignore**：你可以在项目根目录中使用 `.ignore` 文件，遵循与 `.gitignore` 相同的格式。ripgrep 和 the silver searcher 等工具也会遵守此文件，减少了维护多个忽略文件的需要。此行为可以通过 `ignore.useDotIgnore` 设置或 `--no-dot-ignore` CLI 选项控制。
+- **默认模式**：Repomix 包含常见排除文件和目录的默认列表（例如 node_modules、.git、二进制文件）。此功能可以通过 `ignore.useDefaultPatterns` 设置或 `--no-default-patterns` CLI 选项控制。有关详细信息，请参阅 [defaultIgnore.ts](https://github.com/yamadashy/repomix/blob/main/src/config/defaultIgnore.ts)。
+- **.repomixignore**：你可以在项目根目录中创建 `.repomixignore` 文件来定义 Repomix 特定的忽略模式。此文件遵循与 `.gitignore` 相同的格式。
+- **自定义模式**：可以使用配置文件中的 `ignore.customPatterns` 选项指定其他忽略模式。你可以使用 `-i, --ignore` 命令行选项覆盖此设置。
+
+**优先顺序**（从高到低）：
+
+1. 自定义模式（`ignore.customPatterns`）
+2. 忽略文件（`.repomixignore`、`.ignore`、`.gitignore` 和 `.git/info/exclude`）：
+   - 在嵌套目录中时，更深层目录中的文件具有更高优先级
+   - 在同一目录中时，这些文件的合并顺序不确定
+3. 默认模式（如果 `ignore.useDefaultPatterns` 为 true 且未使用 `--no-default-patterns`）
+
+这种方法允许根据项目需求灵活配置文件排除。它通过确保排除安全敏感文件和大型二进制文件来帮助优化生成的打包文件的大小，同时防止机密信息泄漏。
+
+**注意：**默认情况下，二进制文件不包含在打包输出中，但它们的路径列在输出文件的"仓库结构"部分。这提供了仓库结构的完整概述，同时保持打包文件高效且基于文本。有关详细信息，请参阅[二进制文件处理](#二进制文件处理)。
+
+`.repomixignore` 示例：
+```text
+# 缓存目录
+.cache/
+tmp/
+
+# 构建输出
+dist/
+build/
+
+# 日志
+*.log
+```
+
+## 默认忽略模式
+
+当 `ignore.useDefaultPatterns` 为 true 时，Repomix 自动忽略以下常见模式：
+```text
+node_modules/**
+.git/**
+coverage/**
+dist/**
+```
+
+完整列表请参见 [defaultIgnore.ts](https://github.com/yamadashy/repomix/blob/main/src/config/defaultIgnore.ts)
+
+## 二进制文件处理
+
+二进制文件（如图像、PDF、编译的二进制文件、归档文件等）经过特殊处理以保持高效的基于文本的输出：
+
+- **文件内容**：二进制文件**不包含**在打包输出中，以保持文件基于文本且对 AI 处理高效
+- **目录结构**：二进制文件**路径被列出**在目录结构部分，提供仓库的完整概述
+
+这种方法确保你获得仓库结构的完整视图，同时保持为 AI 处理而优化的高效纯文本输出。
+
+**示例：**
+
+如果你的仓库包含 `logo.png` 和 `app.jar`：
+- 它们将出现在目录结构部分
+- 它们的内容将不会包含在文件部分
+
+**目录结构输出：**
+```
+src/
+  index.ts
+  utils.ts
+assets/
+  logo.png
+build/
+  app.jar
+```
+
+这样，AI 工具可以理解这些二进制文件存在于你的项目结构中，而无需处理其二进制内容。
+
+**注意：**你可以使用 `input.maxFileSize` 配置选项（默认值：50 MB）控制最大文件大小阈值。大于此限制的文件将被完全跳过。
+
+## 高级功能
+
+### 代码压缩
+
+代码压缩功能（通过 `output.compress: true` 启用）使用 [Tree-sitter](https://github.com/tree-sitter/tree-sitter) 智能提取基本代码结构，同时移除实现细节。这有助于在保持重要的结构信息的同时减少 token 数量。
+
+主要优点：
+- 显著减少 token 数量
+- 保留类和函数签名
+- 保持导入和导出
+- 保留类型定义和接口
+- 移除函数体和实现细节
+
+更多详细信息和示例，请参阅[代码压缩指南](code-compress)。
+
+### 按文件设置包含级别
+
+`output.compress` 为每个文件应用单一级别，而 `output.patterns` 允许你在配置文件中**按 glob** 控制详细级别。每个条目通过 glob 定位文件（匹配方式与 `include`/`ignore` 相同），并为匹配的文件覆盖全局的 `output.compress` 设置。
+
+```json5
+{
+  "output": {
+    "compress": false, // 全局默认值作为兜底
+    "patterns": [
+      { "pattern": "docs/**/*", "compress": true },
+      { "pattern": "website/**/*", "directoryStructureOnly": true }
+    ]
+  }
+}
+```
+
+每个文件会被解析为三个级别之一：
+
+- **完整内容**（默认）：包含文件的完整内容。
+- **压缩**（`compress: true`）：内容会经过与 `output.compress` 相同的 Tree-sitter 处理流程。
+- **仅目录结构**（`directoryStructureOnly: true`）：文件会列在目录结构中，但其内容块会从输出中完全省略。
+
+规则如下：
+
+- 模式按数组顺序求值，对于给定文件，**第一个匹配的模式优先**。
+- 匹配模式的标志会覆盖全局的 `output.compress` 设置。匹配但未设置任何标志的模式会强制该文件为**完整内容**，这对于将文件从全局 `compress` 中列入白名单很方便。
+- 当同一模式同时设置了 `directoryStructureOnly` 和 `compress` 时，`directoryStructureOnly` 优先。
+- 如果没有模式匹配，则应用全局行为（完整内容，或当 `output.compress` 为 `true` 时为压缩）。
+
+此选项仅适用于配置文件；没有等效的 CLI 选项。
+
+### 文件处理器
+
+`input.processors` 会在文件被打包**之前**运行外部命令来转换其内容。每个条目通过 glob 定位文件（匹配方式与 `include`/`ignore` 相同），并用命令的标准输出替换匹配文件的内容。这对于减少 token 数量或转换格式的操作很有用，例如将 JSON 转换为 [TOON](https://github.com/toon-format/toon)、压缩 SVG，或将 notebook 转换为纯脚本。
+
+```json5
+{
+  "input": {
+    "processors": [
+      {
+        "pattern": "**/*.json",
+        "command": "npx @toon-format/cli {file}"
+      }
+    ]
+  }
+}
+```
+
+工作原理：
+
+- Repomix 会将每个匹配文件的内容写入一个临时文件，并将命令中的 `{file}` 占位符（**必需**）替换为该文件的路径。
+- 命令通过 shell 运行，因此管道和 `npx` 等工具都可以使用。其标准输出会成为文件的新内容，之后像其他文件一样流经流水线的其余部分（安全检查、token 计数和输出生成）。
+- 模式按数组顺序求值，**第一个匹配的模式优先**——一个文件最多只会被一个处理器转换（不会链式处理）。
+
+每个处理器的选项：
+
+- `timeout`：等待命令完成的最长时间（毫秒）。默认值：`60000`（60 秒）。请注意，`npx` 在冷缓存时可能需要额外的时间来下载包。
+- `onError`：命令以非零状态退出或超时时的处理方式。`"fail"`（默认）会中止整个打包；`"skip"` 会记录一条警告并回退到文件的原始内容。
+
+示例命令（每个都是与合适的 `pattern` 搭配的 `command` 值）：
+
+| 模式 | `command` | 作用 |
+| --- | --- | --- |
+| `**/*.json` | `jq -c . {file}` | 去除空白以压缩 JSON |
+| `**/*.json` | `npx @toon-format/cli {file}` | 将 JSON 转换为 [TOON](https://github.com/toon-format/toon)，一种紧凑且节省 token 的格式 |
+| `**/*.svg` | `npx svgo -i {file} -o -` | 压缩 SVG |
+| `**/*.ipynb` | `jupyter nbconvert --to script --stdout {file}` | 将 Jupyter notebook 转换为纯 Python 脚本 |
+
+由于第一个匹配的模式优先，因此每个文件只应用一个处理器——例如，对于 `**/*.json` 只选择 `jq` 或 TOON 转换器中的一个。命令必须将转换后的内容写入标准输出，并且它调用的工具必须在你的 `PATH` 上可用（基于 `npx` 的命令会在首次使用时下载工具）。
+
+::: warning 安全
+文件处理器会运行配置文件中的**任意命令**，因此遵循严格的信任模型：
+
+- **仅在本地 CLI 运行时**启用 —— Repomix 认为工作目录中的配置文件属于你自己，这与 npm 脚本或 Makefile 的信任边界相同。同样地，如果你在从他人处获得的仓库中运行 `repomix`，而**事先未检查其 `repomix.config.json`**，其处理器命令将会在你的机器上执行。在打包不受信任的仓库之前，请先检查其配置文件。
+- 在库 API（`pack()` / `runCli()`）、MCP 服务器以及托管的 [repomix.com](https://repomix.com) 中**均被禁用**，因此它们都不能运行配置中的命令。
+- 对于远程仓库（`--remote`），克隆仓库的配置 —— 以及其处理器 —— 仅在你显式传入 `--remote-trust-config` 时才会被信任。若不传入，远程配置甚至不会被加载。
+
+启用的处理器会在启动时记录到日志中，这样来自陌生配置的意外处理器就可以被察觉。由于命令会在启动时以及错误消息中被打印出来，请通过环境变量（例如 `$TOKEN`）引用凭据，而不要将其直接写入命令中，因为环境变量在日志中不会被展开。
+:::
+
+注意事项：
+
+- 不建议将**会更改格式**的处理器与 `output.compress`、`output.removeComments` 或 `output.patterns` 的 `compress` 在同一文件上组合使用：这些步骤是根据文件的原始扩展名进行分发的，因此会对转换后的内容运行错误的语言处理程序。出于同样的原因，Markdown 输出中的代码围栏也会按原始扩展名标注（例如，JSON→TOON 转换后的文件会被标注为 `json`）。压缩是尽力而为的，解析失败时会静默回退到转换后的内容。
+- 使用 `--watch` 时，匹配的文件会在每次重新构建时被重新处理，这会每次都重新运行命令。
+- 超时时，Repomix 会终止命令所在的 shell；如果命令自行启动了长期运行的后台进程，这些进程可能会继续运行。
+- 处理器只会看到文本文件（二进制文件在处理前会被排除），其输出会以 UTF-8 读取。
+
+### Git 集成
+
+`output.git` 配置提供强大的 Git 感知功能：
+
+- `sortByChanges`：当设置为 true 时，文件按 Git 更改次数（修改该文件的提交数）排序。更改次数较多的文件出现在输出的底部。这有助于优先处理更活跃开发的文件。默认值：`true`
+- `sortByChangesMaxCommits`：计算文件更改次数时要分析的最大提交数。默认值：`100`
+- `includeDiffs`：当设置为 true 时，在输出中包含 Git 差异（同时分别包含工作树和暂存区的更改）。这允许读者查看存储库中的待处理更改。默认值：`false`
+- `includeLogs`：当设置为 true 时，在输出中包含 Git 日志。显示提交历史的日期、消息和文件路径，帮助 AI 理解哪些文件通常一起更改。默认值：`false`
+- `includeLogsCount`：要包含的 Git 日志提交数量。控制用于分析开发规律的历史深度。默认值：`50`
+
+配置示例：
+```json
+{
+  "output": {
+    "git": {
+      "sortByChanges": true,
+      "sortByChangesMaxCommits": 100,
+      "includeDiffs": true,
+      "includeLogs": true,
+      "includeLogsCount": 25
+    }
+  }
+}
+```
+
+### 安全检查
+
+当 `security.enableSecurityCheck` 启用时，Repomix 使用 [Secretlint](https://github.com/secretlint/secretlint) 在将代码库包含在输出中之前检测敏感信息。这有助于防止意外暴露：
+
+- API 密钥
+- 访问令牌
+- 私钥
+- 密码
+- 其他敏感凭据
+
+### 注释移除
+
+当 `output.removeComments` 设置为 `true` 时，将从支持的文件类型中移除注释，以减少输出大小并专注于核心代码内容。这在以下情况特别有用：
+
+- 处理大量文档化的代码
+- 尝试减少 token 数量
+- 专注于代码结构和逻辑
+
+有关支持的语言和详细示例，请参阅[注释移除指南](comment-removal)。
+
+## 相关资源
+
+- [命令行选项](/zh-cn/guide/command-line-options) - 完整的 CLI 参考（CLI 选项优先于配置文件设置）
+- [输出格式](/zh-cn/guide/output) - 各种输出格式的详细说明
+- [安全](/zh-cn/guide/security) - Repomix 如何检测敏感信息
+- [代码压缩](/zh-cn/guide/code-compress) - 通过 Tree-sitter 减少 Token 数量
+- [GitHub 仓库处理](/zh-cn/guide/remote-repository-processing) - 远程仓库处理选项

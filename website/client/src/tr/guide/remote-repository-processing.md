@@ -1,0 +1,126 @@
+---
+title: "GitHub Deposu İşleme"
+description: "Repomix ile GitHub depolarını tam URL, kullanıcı/depo kısaltması, dallar, etiketler, commit’ler, Docker ve uzak yapılandırma güven kontrolleriyle paketleyin."
+---
+
+# GitHub Deposu İşleme
+
+## Temel Kullanım
+
+Herkese açık depoları işleyin:
+```bash
+# Tam URL kullanarak
+repomix --remote https://github.com/user/repo
+
+# GitHub kısayol formatıyla
+repomix --remote user/repo
+```
+
+`owner/repo` kısayolunu `--remote` olmadan doğrudan da geçebilirsiniz:
+
+```bash
+repomix yamadashy/repomix
+```
+
+`owner/repo` aynı zamanda göreli bir yerel yola da benzediğinden, Repomix bunu yalnızca o adda yerel bir dosya veya dizin yoksa ve depo GitHub üzerinde erişilebilirse uzak depo olarak değerlendirir. Mevcut bir yerel yol her zaman önceliklidir; `owner/repo` biçimindeki bir yolu yerel olarak işlemeye zorlamak için başına `./` ekleyin (örneğin, `repomix ./owner/repo`). Argüman desenle eşleşse de depoya erişilemiyorsa (örneğin özel bir depo veya bir yazım hatası), Repomix bunu yerel yol olarak işlemeye geri döner.
+
+## Dal ve Commit Seçimi
+
+```bash
+# Belirli bir dal
+repomix --remote user/repo --remote-branch main
+
+# Etiket (tag)
+repomix --remote user/repo --remote-branch v1.0.0
+
+# Commit hash
+repomix --remote user/repo --remote-branch 935b695
+```
+
+## Gereksinimler
+
+- Git kurulu olmalıdır
+- İnternet bağlantısı gereklidir
+- Depoya okuma erişimi olmalıdır
+
+## Çıktı Kontrolü
+
+```bash
+# Özel çıktı konumu
+repomix --remote user/repo -o custom-output.xml
+
+# XML formatıyla
+repomix --remote user/repo --style xml
+
+# Yorumları kaldırarak
+repomix --remote user/repo --remove-comments
+```
+
+## Docker Kullanımı
+
+```bash
+# İşleyip mevcut dizine çıktı al
+docker run -v .:/app -it --rm ghcr.io/yamadashy/repomix \
+  --remote user/repo
+
+# Belirli bir dizine çıktı al
+docker run -v ./output:/app -it --rm ghcr.io/yamadashy/repomix \
+  --remote user/repo
+```
+
+## Güvenlik
+
+Güvenlik nedeniyle, uzak depolardaki yapılandırma dosyaları (`repomix.config.*`) varsayılan olarak yüklenmez. Bu sayede güvenilmeyen depoların `repomix.config.ts` gibi yapılandırma dosyaları aracılığıyla kod çalıştırması engellenir.
+
+Global yapılandırmanız ve CLI seçenekleriniz yine de uygulanır.
+
+Uzak bir deponun yapılandırmasına güvenmek için:
+
+```bash
+# CLI bayrağı kullanarak
+repomix --remote user/repo --remote-trust-config
+
+# Ortam değişkeni kullanarak
+REPOMIX_REMOTE_TRUST_CONFIG=true repomix --remote user/repo
+```
+
+::: warning
+`--remote-trust-config`, uzak deponun yapılandırmasına kendi makinenizle aynı düzeyde güven tanır. Güvenilen bir yapılandırma (`input.processors` aracılığıyla) **rastgele komutlar çalıştırabilir** ve (örneğin `output.instructionFilePath` veya `../` kullanan include kalıpları aracılığıyla) **depo dışındaki yerel dosyaları okuyabilir**. Bu seçeneği yalnızca tamamen güvendiğiniz ve incelediğiniz depolar için kullanın; tanımadığınız bir kaynaktan `npm install` veya `Makefile` çalıştırmadan önce göstereceğiniz özenin aynısını gösterin.
+:::
+
+### Onay istemi
+
+Etkileşimli bir terminalde bir deponun yapılandırmasına güvendiğinizde, repomix çalıştırılmak üzere olan yapılandırmayı gösterir ve yüklemeden önce onaylamanızı ister:
+
+- **Evet, yalnızca bu sefer**: yalnızca bu çalıştırmaya güvenilir.
+- **Evet, bu depo için tekrar sorma**: geçici dosyalarınız temizlenene kadar ve yalnızca o yapılandırma dosyası değişmediği sürece hatırlanır (yapılandırma dosyası düzenlenirse tekrar sorulur). Bu kontrolün yalnızca yapılandırma dosyasının kendisini kapsadığını unutmayın: bir `.ts` / `.js` yapılandırması başka dosyaları içe aktarabilir ve bunlar bu kontrolün parçası değildir.
+- **Hayır**: yapılandırmayı çalıştırmadan iptal et.
+
+`--force` bayrağını geçtiğinizde, CI gibi etkileşimli olmayan kabuklarda (yapılandırma öncekiyle aynı şekilde güvenilir kabul edilir, böylece mevcut otomasyonlar çalışmaya devam eder) veya o depoya her zaman güvenmeyi zaten seçtiyseniz, bu istem atlanır.
+
+Tam güven modeli için — güvenilen bir yapılandırmanın neler yapabileceği, gösterilen yapılandırmanın kurcalanmaya karşı nasıl korunduğu ve "tekrar sorma" kararının nerede saklandığı dahil — bkz. [Güvenlik](/tr/guide/security#remote-repository-config-trust).
+
+`--remote` ile `--config` kullanırken mutlak bir yol belirtilmelidir:
+
+```bash
+repomix --remote user/repo --config /home/user/repomix.config.json
+```
+
+## Sık Karşılaşılan Sorunlar
+
+### Erişim Sorunları
+- Deponun herkese açık olduğundan emin olun
+- Git kurulumunu kontrol edin
+- İnternet bağlantınızı doğrulayın
+
+### Büyük Depolar
+- Belirli yolları seçmek için `--include` kullanın
+- `--remove-comments` seçeneğini etkinleştirin
+- Dalları ayrı ayrı işleyin
+
+## İlgili Kaynaklar
+
+- [Komut Satırı Seçenekleri](/tr/guide/command-line-options) - `--remote` seçenekleri dahil tam CLI referansı
+- [Yapılandırma](/tr/guide/configuration) - Uzak işleme için varsayılan seçenekleri ayarlayın
+- [Kod Sıkıştırma](/tr/guide/code-compress) - Büyük depolar için çıktı boyutunu azaltın
+- [Güvenlik](/tr/guide/security) - Repomix'in hassas veri tespitini nasıl ele aldığı

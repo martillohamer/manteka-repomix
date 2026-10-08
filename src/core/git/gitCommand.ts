@@ -1,0 +1,324 @@
+import { execFile } from 'node:child_process';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { promisify } from 'node:util';
+import { RepomixError } from '../../shared/errorHandle.js';
+import { logger } from '../../shared/logger.js';
+import { redactErrorMessage, redactUrl } from '../../shared/urlRedact.js';
+
+const execFileAsync = promisify(execFile);
+
+// A repository's own .git/config can name executables that git will run while
+// merely reading history: gpg.program (reached through log.showSignature),
+// diff.external, per-attribute textconv drivers, and core.fsmonitor. repomix
+// runs these read-only git commands inside directories it did not create: a
+// local pack of an untrusted checkout, or any working directory — so a malicious
+// repository could otherwise turn `git log`/`git diff` into command execution on
+// this host. Every such invocation is neutralized: the command flags disable the
+// log/diff drivers and core.fsmonitor (which has no flag) is overridden to empty.
+// Verified against git 2.53 to block all four vectors while leaving output for a
+// legitimate repository byte-for-byte unchanged.
+//
+// GIT_UNTRUSTED_CONFIG_ARGS goes before the subcommand and so applies to any git
+// command run in the target directory (log, diff, and the rev-parse repository
+// probe). The log args carry the diff-driver flags too: today `git log` only
+// asks for --name-only, but including them keeps the driver keys disabled even if
+// a later change adds patch output, so the guarantee does not depend on the exact
+// log arguments. Both are verified to leave legitimate output unchanged.
+export const GIT_UNTRUSTED_CONFIG_ARGS = ['-c', 'core.fsmonitor='];
+export const GIT_LOG_HARDENING_ARGS = ['--no-show-signature', '--no-ext-diff', '--no-textconv'];
+const GIT_DIFF_HARDENING_ARGS = ['--no-ext-diff', '--no-textconv'];
+
+const GIT_REMOTE_TIMEOUT = 30000;
+const gitRemoteEnv = { ...process.env, GIT_TERMINAL_PROMPT: '0' };
+const gitRemoteOpts = { timeout: GIT_REMOTE_TIMEOUT, env: gitRemoteEnv };
+
+// Opts for the automatic existence probe. It can be triggered by a mistyped local path,
+// so it must fail fast on slow/offline networks and must never block on credential
+// prompts (GCM_INTERACTIVE suppresses Git Credential Manager GUI popups on Windows).
+const GIT_PROBE_TIMEOUT = 5000;
+const gitProbeOpts = { timeout: GIT_PROBE_TIMEOUT, env: { ...gitRemoteEnv, GCM_INTERACTIVE: 'never' } };
+
+export const execGitLogFilenames = async (
+  directory: string,
+  maxCommits = 100,
+  deps = {
+    execFileAsync,
+  },
+): Promise<string[]> => {
+  try {
+    const result = await deps.execFileAsync('git', [
+      '-C',
+      directory,
+      ...GIT_UNTRUSTED_CONFIG_ARGS,
+      'log',
+      ...GIT_LOG_HARDENING_ARGS,
+      '--pretty=format:',
+      '--name-only',
+      '-n',
+      maxCommits.toString(),
+    ]);
+
+    return result.stdout.split('\n').filter(Boolean);
+  } catch (error) {
+    logger.trace('Failed to get git log filenames:', (error as Error).message);
+    return [];
+  }
+};
+
+export const execGitDiff = async (
+  directory: string,
+  options: string[] = [],
+  deps = {
+    execFileAsync,
+  },
+): Promise<string> => {
+  try {
+    const result = await deps.execFileAsync('git', [
+      '-C',
+      directory,
+      ...GIT_UNTRUSTED_CONFIG_ARGS,
+      'diff',
+      '--no-color', // Avoid ANSI color codes
+      ...options,
+      // Hardening flags come last so a caller's option can never re-enable an
+      // external diff or textconv driver (for conflicting flags git honors the
+      // final one).
+      ...GIT_DIFF_HARDENING_ARGS,
+    ]);
+
+    return result.stdout || '';
+  } catch (error) {
+    logger.trace('Failed to execute git diff:', (error as Error).message);
+    throw error;
+  }
+};
+
+export const execGitVersion = async (
+  deps = {
+    execFileAsync,
+  },
+): Promise<string> => {
+  try {
+    const result = await deps.execFileAsync('git', ['--version']);
+    return result.stdout || '';
+  } catch (error) {
+    logger.trace('Failed to execute git version:', (error as Error).message);
+    throw error;
+  }
+};
+
+/**
+ * Abbreviated HEAD of the current branch.
+ *
+ * Kept separate from `execGitRevParse` because an existing repository with no
+ * commits has a valid work tree but no HEAD to abbreviate, and collapsing both
+ * into one call would report "not a repository" for a case that is really just
+ * "nothing committed yet". Throws on failure so callers can degrade on their own.
+ */
+export const execGitShortHead = async (
+  directory: string,
+  deps = {
+    execFileAsync,
+  },
+): Promise<string> => {
+  const result = await deps.execFileAsync('git', [
+    '-C',
+    directory,
+    ...GIT_UNTRUSTED_CONFIG_ARGS,
+    'rev-parse',
+    '--short',
+    'HEAD',
+  ]);
+
+  return (result.stdout || '').trim();
+};
+
+export const execGitRevParse = async (
+  directory: string,
+  deps = {
+    execFileAsync,
+  },
+): Promise<string> => {
+  try {
+    const result = await deps.execFileAsync('git', [
+      '-C',
+      directory,
+      ...GIT_UNTRUSTED_CONFIG_ARGS,
+      'rev-parse',
+      '--is-inside-work-tree',
+    ]);
+    return result.stdout || '';
+  } catch (error) {
+    logger.trace('Failed to execute git rev-parse:', (error as Error).message);
+    throw error;
+  }
+};
+
+export const execLsRemote = async (
+  url: string,
+  deps = {
+    execFileAsync,
+  },
+): Promise<string> => {
+  validateGitUrl(url);
+
+  try {
+    const result = await deps.execFileAsync('git', ['ls-remote', '--heads', '--tags', '--', url], gitRemoteOpts);
+    return result.stdout || '';
+  } catch (error) {
+    logger.trace('Failed to execute git ls-remote:', redactErrorMessage(error));
+    throw error;
+  }
+};
+
+/**
+ * Lightweight remote existence probe: only asks for HEAD instead of all refs,
+ * so the response stays tiny even for repositories with thousands of branches/tags.
+ */
+export const execLsRemoteHead = async (
+  url: string,
+  deps = {
+    execFileAsync,
+  },
+): Promise<string> => {
+  validateGitUrl(url);
+
+  try {
+    const result = await deps.execFileAsync('git', ['ls-remote', '--', url, 'HEAD'], gitProbeOpts);
+    return result.stdout || '';
+  } catch (error) {
+    logger.trace('Failed to execute git ls-remote HEAD:', redactErrorMessage(error));
+    throw error;
+  }
+};
+
+export const execGitShallowClone = async (
+  url: string,
+  directory: string,
+  remoteBranch?: string,
+  deps = {
+    execFileAsync,
+  },
+) => {
+  validateGitUrl(url);
+
+  if (remoteBranch) {
+    validateGitRef(remoteBranch);
+
+    await deps.execFileAsync('git', ['-C', directory, 'init']);
+    await deps.execFileAsync('git', ['-C', directory, 'remote', 'add', '--', 'origin', url]);
+    try {
+      // '--end-of-options' ensures the ref is never interpreted as a git option (argument injection guard)
+      await deps.execFileAsync(
+        'git',
+        ['-C', directory, 'fetch', '--depth', '1', 'origin', '--end-of-options', remoteBranch],
+        gitRemoteOpts,
+      );
+      await deps.execFileAsync('git', ['-C', directory, 'checkout', 'FETCH_HEAD']);
+    } catch (err: unknown) {
+      // git fetch --depth 1 origin <short SHA> always throws "couldn't find remote ref" error
+      const isRefNotfoundError =
+        err instanceof Error && err.message.includes(`couldn't find remote ref ${remoteBranch}`);
+
+      if (!isRefNotfoundError) {
+        // Rethrow error as nothing else we can do
+        throw err;
+      }
+
+      // Short SHA detection - matches a hexadecimal string of 4 to 39 characters
+      // If the string matches this regex, it MIGHT be a short SHA
+      // If the string doesn't match, it is DEFINITELY NOT a short SHA
+      const isNotShortSHA = !remoteBranch.match(/^[0-9a-f]{4,39}$/i);
+
+      if (isNotShortSHA) {
+        // Rethrow error as nothing else we can do
+        throw err;
+      }
+
+      // Maybe the error is due to a short SHA, let's try again
+      // Can't use --depth 1 here as we need to fetch the specific commit
+      await deps.execFileAsync('git', ['-C', directory, 'fetch', 'origin'], gitRemoteOpts);
+      await deps.execFileAsync('git', ['-C', directory, 'checkout', '--end-of-options', remoteBranch]);
+    }
+  } else {
+    await deps.execFileAsync('git', ['clone', '--depth', '1', '--', url, directory], gitRemoteOpts);
+  }
+
+  // Drop the clone's .git. This keeps git internals out of the packed output, but
+  // it is also load-bearing for safety, so keep it unconditional. Packing runs
+  // `git -C <dir> log` by default (output.git.sortByChanges), and git honors the
+  // repository's own .git/config — so a retained .git would let a cloned repo
+  // execute commands on this host through keys such as gpg.program (reached via
+  // log.showSignature). Making the removal conditional, for example to support
+  // diffs on a remote repo, would reopen that path.
+  await fs.rm(path.join(directory, '.git'), { recursive: true, force: true });
+};
+
+export const execGitLog = async (
+  directory: string,
+  maxCommits: number,
+  gitSeparator: string,
+  deps = {
+    execFileAsync,
+  },
+): Promise<string> => {
+  try {
+    const result = await deps.execFileAsync('git', [
+      '-C',
+      directory,
+      ...GIT_UNTRUSTED_CONFIG_ARGS,
+      'log',
+      ...GIT_LOG_HARDENING_ARGS,
+      `--pretty=format:${gitSeparator}%ad|%s`,
+      '--date=iso',
+      '--name-only',
+      '-n',
+      maxCommits.toString(),
+    ]);
+
+    return result.stdout || '';
+  } catch (error) {
+    logger.trace('Failed to execute git log:', (error as Error).message);
+    throw error;
+  }
+};
+
+/**
+ * Validates a Git URL for security and format
+ * @throws {RepomixError} If the URL is invalid or contains potentially dangerous parameters
+ */
+export const validateGitUrl = (url: string): void => {
+  // Block dangerous git parameters that could be used for command injection
+  const dangerousParams = ['--upload-pack', '--receive-pack', '--config', '--exec'];
+  if (dangerousParams.some((param) => url.includes(param))) {
+    throw new RepomixError(`Invalid repository URL. URL contains potentially dangerous parameters: ${redactUrl(url)}`);
+  }
+
+  // Check if the URL starts with git@ or https://
+  if (!(url.startsWith('git@') || url.startsWith('https://'))) {
+    throw new RepomixError(`Invalid URL protocol for '${redactUrl(url)}'. URL must start with 'git@' or 'https://'`);
+  }
+
+  try {
+    if (url.startsWith('https://')) {
+      new URL(url);
+    }
+  } catch (error: unknown) {
+    logger.trace('Invalid repository URL:', redactErrorMessage(error));
+    throw new RepomixError(`Invalid repository URL. Please provide a valid URL: ${redactUrl(url)}`);
+  }
+};
+
+/**
+ * Validates a Git ref (branch, tag, or commit) before passing it to git commands.
+ * A ref starting with '-' could be interpreted as a git option (e.g. --upload-pack),
+ * enabling argument injection. Git's own refname rules also forbid leading '-',
+ * so rejecting it is safe for all legitimate branches, tags, and SHAs.
+ * @throws {RepomixError} If the ref could be interpreted as a command-line option
+ */
+export const validateGitRef = (ref: string): void => {
+  if (ref.startsWith('-')) {
+    throw new RepomixError(`Invalid branch or ref name. Name must not start with '-': ${ref}`);
+  }
+};

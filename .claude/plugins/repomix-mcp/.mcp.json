@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "repomix": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "github:DAW1BSergiomg26/manteka-repomix",
+        "--mcp"
+      ]
+    }
+  }
+}

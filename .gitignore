@@ -1,0 +1,100 @@
+# Dependency directories
+node_modules/
+
+# Build output
+lib/
+website/client/.vitepress/dist/
+website/client/.vitepress/cache/
+website/server/dist/
+website/server/.compile-cache/
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+
+# Editor directories and files
+.vscode/
+.idea/
+
+# Test coverage
+coverage/
+test-report.junit.xml
+
+# Temporary files
+*.tmp
+*.temp
+
+# Repomix output
+repomix-output.txt
+repomix-output.xml
+repomix-output.md
+repomix-output.json
+repomix-output.*
+
+# ESLint cache
+.eslintcache
+
+# yarn
+.yarn/
+
+# biome
+.biome/
+
+# aider
+.aider*
+
+# repomix runner
+.repomix/
+
+# repomix references
+.claude/skills/repomix-reference-*/
+
+# Agent
+/.mcp.json
+# Machine-specific: registers the local MCP server via STDIO with an absolute
+# path (C:/Users/<user>/...), so committing it breaks every other checkout.
+/opencode.json
+.agents/local/
+.claude/settings.local.json
+.claude/worktrees/
+
+# serena
+.serena/
+
+# Manteka local memory (notes, history.log, health-report.json)
+.manteka-memory/
+
+# Manteka evolution lineage (per-repo genetic memory; commit it deliberately
+# to distribute the history across machines — the engine never commits it)
+.manteka-lineage.json
+
+# private files
+.private/
+
+# Environment variables & local credentials
+# `.env` alone (no slash) already matches at any depth, e.g. website/server/.env.
+# `.env.*` additionally covers .env.local, .env.production and
+# .env.development.local, which would otherwise show up in `git status` ready to
+# be staged. The `!.env.example` exception is MANDATORY: without it `.env.*` would
+# also swallow the committed template.
+.env
+.env.*
+!.env.example
+
+# Private keys and keystores (nothing tracked in this repo matches these; if you ever
+# need to version a public certificate, prefer .crt — it is not listed here on purpose)
+*.pem
+*.p12
+*.pfx
+*.keystore
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+.netrc
+
+# Nix
+result
+result-*

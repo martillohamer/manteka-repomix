@@ -1,0 +1,10 @@
+laws:
+  - id: "no-console-log"
+    description: "Production code must not contain console.log statements."
+    disallowedNode: "call_expression"
+    expression: "console.log"
+  - id: "no-mutable-exports"
+    description: "Exported bindings must be declared with const."
+    disallowedNode: "lexical_declaration"
+    parentType: "export_statement"
+    declarationType: "let"

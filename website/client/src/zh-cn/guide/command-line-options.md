@@ -1,0 +1,222 @@
+---
+title: 命令行选项
+description: 查阅 Repomix CLI 的所有选项，涵盖输入、输出、文件选择、远程仓库、配置、安全、令牌计数、MCP 和 Agent Skills。
+---
+
+# 命令行选项
+
+## 基本选项
+- `-v, --version`: 显示版本信息并退出
+
+## CLI 输入/输出选项
+
+| 选项 | 说明 |
+|------|------|
+| `--verbose` | 启用详细调试日志（显示文件处理、token 计数和配置详细信息） |
+| `--quiet` | 抑制除错误外的所有控制台输出（用于脚本编写） |
+| `--stdout` | 将打包输出直接写入标准输出而不是文件（抑制所有日志记录） |
+| `--stdin` | 从标准输入逐行读取文件路径（指定的文件直接处理） |
+| `--copy` | 处理后将生成的输出复制到系统剪贴板 |
+| `--token-count-tree [threshold]` | 显示带有 token 计数的文件树；可选阈值仅显示 ≥N token 的文件（例如：`--token-count-tree 100`） |
+| `--top-files-len <number>` | 摘要中显示的最大文件数（默认：`5`） |
+
+## Repomix 输出选项
+
+| 选项 | 说明 |
+|------|------|
+| `-o, --output <file>` | 输出文件路径（默认：`repomix-output.xml`，使用 `"-"` 输出到标准输出） |
+| `--style <style>` | 输出格式：`xml`、`markdown`、`json` 或 `plain`（默认：`xml`） |
+| `--output-file-path-style <style>` | 输出中文件路径的显示方式：`target-relative` 或 `cwd-relative`（默认：`target-relative`） |
+| `--parsable-style` | 转义特殊字符以确保有效的 XML/Markdown（当输出包含破坏格式的代码时需要） |
+| `--compress` | 使用 Tree-sitter 解析提取基本代码结构（类、函数、接口） |
+| `--output-show-line-numbers` | 为输出中的每行添加行号前缀 |
+| `--no-file-summary` | 从输出中省略文件摘要部分 |
+| `--no-directory-structure` | 从输出中省略目录树可视化 |
+| `--no-files` | 仅生成元数据而不包含文件内容（用于仓库分析） |
+| `--remove-comments` | 打包前剥离所有代码注释 |
+| `--remove-empty-lines` | 从所有文件中删除空行 |
+| `--truncate-base64` | 截断长 base64 数据字符串以减少输出大小 |
+| `--header-text <text>` | 在输出开头包含的自定义文本 |
+| `--instruction-file-path <path>` | 包含要在输出中包含的自定义指令的文件路径 |
+| `--split-output <size>` | 将输出拆分为多个编号文件（例如 `repomix-output.1.xml`）；大小如 `500kb`、`2mb` 或 `1.5mb` |
+| `--include-empty-directories` | 在目录结构中包含没有文件的文件夹 |
+| `--include-full-directory-structure` | 即使使用 `--include` 模式，也在目录结构部分显示完整的仓库树 |
+| `--no-git-sort-by-changes` | 不按 git 更改频率排序文件（默认：最常更改的文件优先） |
+| `--include-diffs` | 添加显示工作树和暂存更改的 git diff 部分 |
+| `--include-logs` | 添加包含消息和更改文件的 git 提交历史 |
+| `--include-logs-count <count>` | 与 `--include-logs` 一起包含的最新提交数（默认：`50`） |
+
+## 文件选择选项
+
+| 选项 | 说明 |
+|------|------|
+| `--include <patterns>` | 仅包含与这些 glob 模式匹配的文件（逗号分隔，例如：`"src/**/*.js,*.md"`） |
+| `-i, --ignore <patterns>` | 要排除的附加模式（逗号分隔，例如：`"*.test.js,docs/**"`） |
+| `--no-gitignore` | 不使用 `.gitignore` 规则过滤文件 |
+| `--no-dot-ignore` | 不使用 `.ignore` 规则过滤文件 |
+| `--no-default-patterns` | 不应用内置忽略模式（`node_modules`、`.git`、构建目录等） |
+
+## 远程仓库选项
+
+| 选项 | 说明 |
+|------|------|
+| `--remote <url>` | 克隆并打包远程仓库（GitHub URL 或 `user/repo` 格式） |
+| `--remote-branch <name>` | 要使用的特定分支、标签或提交（默认：仓库的默认分支） |
+| `--remote-trust-config` | 信任并加载远程仓库的配置文件。被信任的配置可以执行命令并读取本地文件，因此请仅对你完全信任的仓库使用（出于安全考虑默认禁用）。在交互式终端中会显示该配置并要求确认 |
+
+## 配置选项
+
+| 选项 | 说明 |
+|------|------|
+| `-c, --config <path>` | 使用自定义配置文件而不是 `repomix.config.json` |
+| `--init` | 使用默认设置创建新的 `repomix.config.json` 文件 |
+| `--global` | 与 `--init` 一起使用，在主目录而不是当前目录中创建配置 |
+
+## 安全选项
+- `--no-security-check`: 跳过扫描API密钥和密码等敏感数据
+
+## Token 计数选项
+- `--token-count-encoding <encoding>`: 用于计数的分词器模型：o200k_base（GPT-4o）、cl100k_base（GPT-3.5/4）等（默认：o200k_base）
+- `--token-budget <number>`: 当打包输出超过 N 个 token 时以非零退出码失败。可在 CI 流水线和 agent 工作流中作为防护，使输出保持在目标模型的上下文窗口内。输出仍会生成，仅由退出码标示溢出
+
+## MCP 选项
+- `--mcp`: 作为AI工具集成的Model Context Protocol服务器运行
+- `--sandbox [dir]`: （配合 `--mcp` 使用）将 MCP 服务器的文件工具限制在一个工作区目录内（默认为当前工作目录；例如 `--sandbox path/to/project`）。所有路径都相对于该根目录解析，绝对路径/主机路径会被拒绝，同时远程打包、Skill 生成以及附加外部输出功能均被禁用。详见 [MCP 服务器](/zh-cn/guide/mcp-server)
+
+## Agent Skills 生成选项
+
+| 选项 | 说明 |
+|------|------|
+| `--skill-generate [name]` | 生成 Claude Agent Skills 格式输出到 `.claude/skills/<name>/` 目录（省略名称时自动生成） |
+| `--skill-project-name <name>` | 覆盖生成的 Skills 描述中使用的项目名称 |
+| `--skill-output <path>` | 直接指定技能输出目录路径（跳过位置选择提示） |
+| `-f, --force` | 跳过所有确认提示（技能目录覆盖、远程配置信任） |
+
+## 监视模式选项
+
+- `-w, --watch`: 监视文件更改并自动重新打包。会检测新增、修改和删除的文件，对快速连续的更改进行防抖处理（300 毫秒），并在每次重新构建后打印时间戳。按 `Ctrl+C` 停止。
+
+监视模式仅适用于本地目录，因此无法与 `--remote`、作为位置参数传入的远程仓库 URL、`--stdout`、`--stdin`、`--split-output`、`--skill-generate` 或 `--copy` 组合使用。无论该选项是在命令行还是在配置文件中设置，这些限制都适用。
+
+## 热力学与进化命令
+
+Repomix 提供两个分析命令，它们读取存储库的 Git 历史并报告代码承压的位置。就工作树而言，两者都是只读的：`heat` 不会写入任何内容，`evolve` 的全部工作都在临时目录下的临时 Git 工作树中完成，因此不会影响你的分支、HEAD 和未提交的更改。
+
+### heat
+
+根据提交变动频率、作者数量、文件大小和圈复杂度测量每个文件的"温度"，然后将温度达到或超过阈值的文件列为*沸腾*状态。
+
+```bash
+# Analyse the last 90 days of history
+repomix heat .
+
+# Widen the window and the report size
+repomix heat . --days 365 --limit 50
+
+# Machine-readable output
+repomix heat . --json
+```
+
+| 选项 | 默认值 | 说明 |
+| --- | --- | --- |
+| `--days <n>` | `90` | 要分析的 Git 历史天数 |
+| `--max-commits <n>` | `500` | 要分析的最大提交数 |
+| `--t-max <n>` | `80` | 判定文件沸腾的温度阈值 |
+| `--limit <n>` | `20` | 表中列出的文件数量 |
+| `--json` | off | 输出原始报告而非表格 |
+| `--no-fail` | off | 即使检测到沸腾文件也以 `0` 退出 |
+| `--report` | off | 将 `thermodynamic-report.json` 写入 `.manteka-memory/` |
+
+### evolve
+
+将存储库分支为临时变异体，对沸腾文件施加变异，并按生物学适应度指数对变异体进行排名。每个变异体都在自己独立的 detached Git 工作树中评估，因此绝不会修改你的存储库。
+
+```bash
+# Explore five mutants from the current HEAD
+repomix evolve .
+
+# Restrict to one operator and two files
+repomix evolve . --operator dead-guard --target src/legacy.ts
+
+# Include the project's own test suite in the score
+repomix evolve . --run-tests
+```
+
+| 选项 | 默认值 | 说明 |
+| --- | --- | --- |
+| `--population <n>` | `5` | 评估的最大变异体数量 |
+| `--operator <name>` | 三种 | 限定为单个算子；可重复指定 |
+| `--target <path>` | 沸腾文件 | 限定到特定文件；可重复指定 |
+| `--concurrency <n>` | `2` | 并行评估的变异体数量 |
+| `--run-tests` | off | 将测试维度纳入适应度指数 |
+| `--test-timeout <ms>` | `300000` | 每个变异体的测试套件超时时间 |
+| `--json` | off | 输出原始报告而非表格 |
+| `--report` | off | 将 `evolution-report.json` 写入 `.manteka-memory/` |
+
+`--target` 只会缩小范围，而不会扩大范围：目标会与沸腾集合求交集，因此指定一个未沸腾的文件不会为它生成任何变异体。
+
+**排名含义。** 三种变异算子都会添加代码，这会使温度略微升高。因此每个变异体的得分都略低于未修改的基线，该排名意味着**危害最小者优先**，而不是改进幅度最大者优先。在后续版本引入冷却算子之前，请按这个方式解读表格。
+
+::: warning 运行你自己的测试套件
+`--run-tests` 会在变异后的源代码上，为每个变异体执行一次你自己的 `test` 脚本。这意味着项目中的任意代码正在针对修改后的输入运行。除非你确实打算运行，否则请保持关闭，并预期它会很慢。
+:::
+
+## 相关资源
+
+- [配置](/zh-cn/guide/configuration) - 通过配置文件而非 CLI 标志设置选项
+- [输出格式](/zh-cn/guide/output) - XML、Markdown、JSON 和纯文本格式详解
+- [代码压缩](/zh-cn/guide/code-compress) - `--compress` 与 Tree-sitter 的工作原理
+- [安全](/zh-cn/guide/security) - `--no-security-check` 禁用的功能
+
+## 示例
+
+```bash
+# 基本使用
+repomix
+
+# 自定义输出文件和格式
+repomix -o my-output.xml --style xml
+
+# 输出到标准输出
+repomix --stdout > custom-output.txt
+
+# 输出到标准输出，然后管道到另一个命令（例如，simonw/llm）
+repomix --stdout | llm "请解释这段代码的作用。"
+
+# 使用压缩的自定义输出
+repomix --compress
+
+# Git集成功能
+repomix --include-logs   # 包含git日志（默认50个提交）
+repomix --include-logs --include-logs-count 10  # 包含最近10个提交
+repomix --include-diffs --include-logs  # 同时包含差异和日志
+
+# 使用模式处理特定文件
+repomix --include "src/**/*.ts,*.md" --ignore "*.test.js,docs/**"
+
+# 带分支的远程仓库
+repomix --remote https://github.com/user/repo/tree/main
+
+# 带提交的远程仓库
+repomix --remote https://github.com/user/repo/commit/836abcd7335137228ad77feb28655d85712680f1
+
+# 使用简写的远程仓库
+repomix --remote user/repo
+
+# 使用简写的远程仓库（自动检测，无需 --remote）
+repomix user/repo
+
+# 使用stdin的文件列表
+find src -name "*.ts" -type f | repomix --stdin
+git ls-files "*.js" | repomix --stdin
+echo -e "src/index.ts\nsrc/utils.ts" | repomix --stdin
+
+# Token 计数分析
+repomix --token-count-tree
+repomix --token-count-tree 1000  # 仅显示拥有 1000+ Token 的文件
+
+# 监视模式：文件更改时自动重新打包
+repomix --watch
+repomix -w --include "src/**/*.ts"
+```
+

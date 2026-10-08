@@ -1,0 +1,298 @@
+---
+title: "Server MCP"
+description: "Esegui Repomix come server Model Context Protocol, così gli assistenti IA possono impacchettare, cercare e leggere direttamente codebase locali o remote."
+---
+
+# Server MCP
+
+Repomix supporta il [Model Context Protocol (MCP)](https://modelcontextprotocol.io), permettendo agli assistenti IA di interagire direttamente con la tua codebase. Quando viene eseguito come server MCP, Repomix fornisce strumenti che permettono agli assistenti IA di impacchettare repository locali o remoti per l'analisi senza richiedere la preparazione manuale dei file.
+
+> [!NOTE]
+> Questa è una funzionalità sperimentale che miglioreremo attivamente in base ai feedback degli utenti e all'uso reale
+
+## Eseguire Repomix come Server MCP
+
+Per eseguire Repomix come server MCP, usa l'opzione `--mcp`:
+```bash
+repomix --mcp
+```
+
+Questo avvia Repomix in modalità server MCP, rendendolo disponibile per gli assistenti IA che supportano il Model Context Protocol.
+
+## Modalità Sandbox
+
+Per impostazione predefinita, il server MCP può leggere qualsiasi percorso a cui l'utente host ha accesso. Questo è comodo per un assistente locale affidabile, ma troppo permissivo quando il server è esposto a un client o un agente non affidabile. L'opzione `--sandbox` confina gli strumenti per il file system del server a un'unica directory di lavoro:
+
+```bash
+# Confina alla directory di lavoro corrente
+repomix --mcp --sandbox
+
+# Confina a una directory specifica
+repomix --mcp --sandbox path/to/project
+```
+
+Quando la modalità sandbox è attiva:
+
+- **Ogni percorso è relativo alla radice della directory di lavoro.** I percorsi assoluti, `~`, `..` e i percorsi drive/UNC di Windows vengono rifiutati, e i percorsi che si risolvono al di fuori della radice (anche tramite symlink) vengono scartati. Anche i risultati e i messaggi di errore sono relativi, quindi i percorsi dell'host non vengono esposti. Questo vale per gli argomenti `directory` e `path` nel riferimento degli strumenti qui sotto: in modalità sandbox, passali relativi alla radice della directory di lavoro, non come i percorsi assoluti che quelle tabelle descrivono altrimenti.
+- **Vengono registrati solo strumenti di sola lettura e confinati alla radice:** `pack_codebase`, `read_repomix_output`, `grep_repomix_output`, `file_system_read_file` e `file_system_read_directory`. L'impacchettamento remoto, la generazione di skill e l'allegato di output esterni sono disabilitati, poiché raggiungono la rete, scrivono file o fanno riferimento a percorsi arbitrari. I due strumenti `file_system_*` stessi sono disponibili solo in modalità sandbox, dove la radice della directory di lavoro delimita ciò che possono raggiungere.
+
+Si tratta di un confinamento a livello applicativo della superficie degli strumenti (difesa in profondità), non di una sandbox a livello di sistema operativo. Quando ospiti il server per client non affidabili, eseguilo comunque con i normali meccanismi di isolamento della tua piattaforma (container, utenti dedicati).
+
+`--sandbox` influisce solo sul server MCP; non ha alcun effetto senza `--mcp`.
+
+## Configurazione dei Server MCP
+
+Per usare Repomix come server MCP con assistenti IA come Claude, devi configurare le impostazioni MCP:
+
+### Per VS Code
+
+Puoi installare il server MCP Repomix in VS Code usando uno di questi metodi:
+
+1. **Usando il badge di installazione:**
+
+  [![Install in VS Code](https://img.shields.io/badge/VS_Code-VS_Code?style=flat-square&label=Install%20Server&color=0098FF)](vscode:mcp/install?%7B%22name%22%3A%22repomix%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22repomix%22%2C%22--mcp%22%5D%7D)<br>
+  [![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-VS_Code_Insiders?style=flat-square&label=Install%20Server&color=24bfa5)](vscode-insiders:mcp/install?%7B%22name%22%3A%22repomix%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22repomix%22%2C%22--mcp%22%5D%7D)
+
+2. **Usando la linea di comando:**
+
+  ```bash
+  code --add-mcp '{"name":"repomix","command":"npx","args":["-y","repomix","--mcp"]}'
+  ```
+
+  Per VS Code Insiders:
+  ```bash
+  code-insiders --add-mcp '{"name":"repomix","command":"npx","args":["-y","repomix","--mcp"]}'
+  ```
+
+### Per Cline (estensione VS Code)
+
+Modifica il file `cline_mcp_settings.json`:
+```json
+{
+  "mcpServers": {
+    "repomix": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "repomix",
+        "--mcp"
+      ]
+    }
+  }
+}
+```
+
+### Per Cursor
+
+In Cursor, aggiungi un nuovo server MCP da `Cursor Settings` > `MCP` > `+ Add new global MCP server` con una configurazione simile a quella di Cline.
+
+### Per Claude Desktop
+
+Modifica il file `claude_desktop_config.json` con una configurazione simile a quella di Cline.
+
+### Per Claude Code
+
+Per configurare Repomix come server MCP in [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview), usa il seguente comando:
+
+```bash
+claude mcp add repomix -- npx -y repomix --mcp
+```
+
+In alternativa, puoi usare i **plugin ufficiali Repomix** per un'esperienza più comoda. I plugin forniscono comandi in linguaggio naturale e una configurazione più semplice. Consulta la documentazione [Plugin Claude Code](/it/guide/claude-code-plugins) per i dettagli.
+
+### Usare Docker invece di npx
+
+Invece di usare npx, puoi usare Docker per eseguire Repomix come server MCP:
+
+```json
+{
+  "mcpServers": {
+    "repomix-docker": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "ghcr.io/yamadashy/repomix",
+        "--mcp"
+      ]
+    }
+  }
+}
+```
+
+## Strumenti MCP Disponibili
+
+In modalità server MCP, Repomix fornisce i seguenti strumenti:
+
+### pack_codebase
+
+Questo strumento impacchetta una directory di codice locale in un file XML per l'analisi IA. Analizza la struttura della codebase, estrae il contenuto di codice rilevante e genera un report completo che include metriche, albero dei file e contenuto di codice formattato.
+
+**Parametri:**
+
+| Parametro | Richiesto | Predefinito | Descrizione |
+|-----------|-----------|-------------|-------------|
+| `directory` | Si | — | Percorso assoluto alla directory da impacchettare |
+| `compress` | No | `false` | Abilita la compressione Tree-sitter per estrarre le firme di codice essenziali e la struttura rimuovendo i dettagli di implementazione. Riduce l'utilizzo dei token di circa il 70% preservando il significato semantico. Generalmente non necessario poiché `grep_repomix_output` permette il recupero incrementale del contenuto. |
+| `includePatterns` | No | — | File da includere usando pattern fast-glob. Separati da virgole (es: `"**/*.{js,ts}"`, `"src/**,docs/**"`) |
+| `ignorePatterns` | No | — | File aggiuntivi da escludere usando pattern fast-glob. Separati da virgole (es: `"test/**,*.spec.js"`). Completano `.gitignore` e le esclusioni integrate. |
+| `outputPatterns` | No | — | Livelli di inclusione per-file, che rispecchiano l'opzione del file di configurazione [`output.patterns`](./configuration.md). Un array di voci `{ "pattern": string, "compress"?: boolean, "directoryStructureOnly"?: boolean }`. Il primo pattern corrispondente ha la precedenza; `directoryStructureOnly` ha la precedenza su `compress`, e una corrispondenza senza nessuno dei due flag forza il contenuto completo (utile per escludere file da un `compress` globale). Sovrascrive qualsiasi `output.patterns` proveniente dal `repomix.config.json` del repository di destinazione. |
+| `topFilesLength` | No | `10` | Numero dei file più grandi per dimensione da mostrare nel riepilogo delle metriche |
+| `style` | No | `xml` | Stile del formato di output: `xml`, `markdown`, `json` o `plain` |
+
+**Esempio:**
+```json
+{
+  "directory": "/path/to/your/project",
+  "compress": true,
+  "includePatterns": "src/**/*.ts,**/*.md",
+  "ignorePatterns": "**/*.log,tmp/",
+  "outputPatterns": [
+    { "pattern": "src/core/**" },
+    { "pattern": "docs/**/*", "directoryStructureOnly": true }
+  ],
+  "topFilesLength": 10
+}
+```
+
+Con l'esempio sopra (dove `compress: true` funge da catch-all per i file non corrispondenti), i file sotto `src/core/` mantengono il contenuto completo, i file sotto `docs/` vengono elencati solo nella struttura delle directory, mentre tutto il resto viene compresso.
+
+### pack_remote_repository
+
+Questo strumento recupera, clona e impacchetta un repository GitHub in un file XML per l'analisi IA. Clona automaticamente il repository remoto, analizza la sua struttura e genera un report completo.
+
+**Parametri:**
+
+| Parametro | Richiesto | Predefinito | Descrizione |
+|-----------|-----------|-------------|-------------|
+| `remote` | Si | — | URL del repository GitHub o formato `utente/repo` (es: `"yamadashy/repomix"`, `"https://github.com/user/repo"` o `"https://github.com/user/repo/tree/branch"`) |
+| `compress` | No | `false` | Abilita la compressione Tree-sitter per estrarre le firme di codice essenziali e la struttura rimuovendo i dettagli di implementazione. Riduce l'utilizzo dei token di circa il 70% preservando il significato semantico. Generalmente non necessario poiché `grep_repomix_output` permette il recupero incrementale del contenuto. |
+| `includePatterns` | No | — | File da includere usando pattern fast-glob. Separati da virgole (es: `"**/*.{js,ts}"`, `"src/**,docs/**"`) |
+| `ignorePatterns` | No | — | File aggiuntivi da escludere usando pattern fast-glob. Separati da virgole (es: `"test/**,*.spec.js"`). Completano `.gitignore` e le esclusioni integrate. |
+| `outputPatterns` | No | — | Livelli di inclusione per-file, che rispecchiano l'opzione del file di configurazione [`output.patterns`](./configuration.md). Un array di voci `{ "pattern": string, "compress"?: boolean, "directoryStructureOnly"?: boolean }`. Il primo pattern corrispondente ha la precedenza; `directoryStructureOnly` ha la precedenza su `compress`, e una corrispondenza senza nessuno dei due flag forza il contenuto completo (utile per escludere file da un `compress` globale). |
+| `topFilesLength` | No | `10` | Numero dei file più grandi per dimensione da mostrare nel riepilogo delle metriche |
+| `style` | No | `xml` | Stile del formato di output: `xml`, `markdown`, `json` o `plain` |
+
+**Esempio:**
+```json
+{
+  "remote": "yamadashy/repomix",
+  "compress": true,
+  "includePatterns": "src/**/*.ts,**/*.md",
+  "ignorePatterns": "**/*.log,tmp/",
+  "outputPatterns": [
+    { "pattern": "src/core/**" },
+    { "pattern": "docs/**/*", "directoryStructureOnly": true }
+  ],
+  "topFilesLength": 10
+}
+```
+
+### read_repomix_output
+
+Questo strumento legge il contenuto di un file di output generato da Repomix. Supporta la lettura parziale con specifica dell'intervallo di righe per file grandi. Questo strumento è progettato per ambienti dove l'accesso diretto al file system è limitato.
+
+**Parametri:**
+
+| Parametro | Richiesto | Predefinito | Descrizione |
+|-----------|-----------|-------------|-------------|
+| `outputId` | Si | — | ID del file di output Repomix da leggere |
+| `startLine` | No | Inizio del file | Numero di riga di inizio (basato su 1, incluso) |
+| `endLine` | No | Fine del file | Numero di riga di fine (basato su 1, incluso) |
+
+**Funzionalità:**
+- Progettato specificamente per ambienti basati sul web o applicazioni sandbox
+- Recupera il contenuto degli output generati precedentemente usando il loro ID
+- Fornisce accesso alla codebase impacchettata senza richiedere accesso al file system
+- Supporta la lettura parziale per file grandi
+
+**Esempio:**
+```json
+{
+  "outputId": "8f7d3b1e2a9c6054",
+  "startLine": 100,
+  "endLine": 200
+}
+```
+
+### grep_repomix_output
+
+Questo strumento cerca pattern in un file di output Repomix usando funzionalità simili a grep con la sintassi JavaScript RegExp. Restituisce le righe corrispondenti con righe di contesto opzionali intorno alle corrispondenze.
+
+**Parametri:**
+
+| Parametro | Richiesto | Predefinito | Descrizione |
+|-----------|-----------|-------------|-------------|
+| `outputId` | Si | — | ID del file di output Repomix da cercare |
+| `pattern` | Si | — | Pattern di ricerca (sintassi JavaScript RegExp) |
+| `contextLines` | No | `0` | Numero di righe di contesto prima e dopo ogni corrispondenza. Sovrascritto da `beforeLines`/`afterLines` se specificato. |
+| `beforeLines` | No | — | Righe da mostrare prima di ogni corrispondenza (come `grep -B`). Ha priorità su `contextLines`. |
+| `afterLines` | No | — | Righe da mostrare dopo ogni corrispondenza (come `grep -A`). Ha priorità su `contextLines`. |
+| `ignoreCase` | No | `false` | Esegue una corrispondenza case-insensitive |
+
+**Funzionalità:**
+- Usa la sintassi JavaScript RegExp per una potente corrispondenza di pattern
+- Supporta righe di contesto per una migliore comprensione delle corrispondenze
+- Permette controllo separato delle righe di contesto prima/dopo
+- Opzioni di ricerca case-sensitive e case-insensitive
+
+**Esempio:**
+```json
+{
+  "outputId": "8f7d3b1e2a9c6054",
+  "pattern": "function\\s+\\w+\\(",
+  "contextLines": 3,
+  "ignoreCase": false
+}
+```
+
+### file_system_read_file e file_system_read_directory
+
+Questi due strumenti per il file system sono disponibili solo in [modalità sandbox](#modalità-sandbox) (`--sandbox`), dove la radice della directory di lavoro delimita ciò che possono raggiungere. Senza `--sandbox` non vengono registrati.
+
+1. `file_system_read_file`
+  - Legge il contenuto di un file a un percorso relativo alla radice della directory di lavoro (ad es. `src/index.ts`)
+  - Rifiuta contenuti che corrispondono a formati di segreti noti ([Secretlint](https://github.com/secretlint/secretlint)) come ulteriore salvaguardia euristica; il confine di accesso è la radice della directory di lavoro, non la scansione
+  - Restituisce messaggi di errore chiari per percorsi non validi, senza esporre i percorsi dell'host
+
+2. `file_system_read_directory`
+  - Elenca il contenuto di una directory a un percorso relativo alla radice della directory di lavoro (ad es. `.` o `src`)
+  - Mostra file e directory con indicatori chiari (`[FILE]` o `[DIR]`)
+  - Utile per esplorare la struttura del progetto e comprendere l'organizzazione della codebase
+
+**Esempio:**
+```typescript
+// Lettura di un file
+const fileContent = await tools.file_system_read_file({
+  path: 'src/index.ts'
+});
+
+// Elenco del contenuto di una directory
+const dirContent = await tools.file_system_read_directory({
+  path: 'src'
+});
+```
+
+Questi strumenti sono particolarmente utili quando gli assistenti IA devono:
+- Analizzare file specifici nella directory di lavoro
+- Navigare nelle strutture delle directory
+- Verificare l'esistenza e l'accessibilità dei file
+
+## Vantaggi dell'Uso di Repomix come Server MCP
+
+L'uso di Repomix come server MCP offre diversi vantaggi:
+
+1. **Integrazione diretta**: Gli assistenti IA possono analizzare direttamente la tua codebase senza preparazione manuale dei file.
+2. **Workflow efficiente**: Semplifica il processo di analisi del codice eliminando la necessità di generare e caricare manualmente i file.
+3. **Output coerente**: Garantisce che l'assistente IA riceva la codebase in un formato coerente e ottimizzato.
+4. **Funzionalità avanzate**: Sfrutta tutte le funzionalità di Repomix come la compressione del codice, il conteggio dei token e i controlli di sicurezza.
+
+Una volta configurato, il tuo assistente IA può usare direttamente le capacità di Repomix per analizzare le codebase, rendendo i workflow di analisi del codice più efficienti.
+
+## Risorse correlate
+
+- [Plugin Claude Code](/it/guide/claude-code-plugins) - Integrazione pratica dei plugin per Claude Code
+- [Configurazione](/it/guide/configuration) - Personalizzare il comportamento di Repomix
+- [Opzioni da Linea di Comando](/it/guide/command-line-options) - Riferimento completo della CLI
+- [Formati di Output](/it/guide/output) - Scoprire i formati di output disponibili

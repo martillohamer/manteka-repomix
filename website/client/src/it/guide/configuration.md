@@ -1,0 +1,480 @@
+---
+title: "Configurazione"
+description: "Configura Repomix con file JSON, JSONC, JSON5, JavaScript o TypeScript, inclusi formati di output, pattern include e ignore e opzioni avanzate."
+---
+
+# Configurazione
+
+Repomix può essere configurato usando un file di configurazione o opzioni da linea di comando. Il file di configurazione ti permette di personalizzare vari aspetti dell'elaborazione e dell'output della tua codebase.
+
+## Formati dei File di Configurazione
+
+Repomix supporta diversi formati di file di configurazione per maggiore flessibilità e facilità d'uso.
+
+Repomix cercherà automaticamente i file di configurazione nel seguente ordine di priorità:
+
+1. **TypeScript** (`repomix.config.ts`, `repomix.config.mts`, `repomix.config.cts`)
+2. **JavaScript/ES Module** (`repomix.config.js`, `repomix.config.mjs`, `repomix.config.cjs`)
+3. **JSON** (`repomix.config.json5`, `repomix.config.jsonc`, `repomix.config.json`)
+
+### Configurazione JSON
+
+Crea un file di configurazione nella directory del tuo progetto:
+```bash
+repomix --init
+```
+
+Questo creerà un file `repomix.config.json` con le impostazioni predefinite. Puoi anche creare un file di configurazione globale che verrà usato come fallback quando non viene trovata una configurazione locale:
+
+```bash
+repomix --init --global
+```
+
+### Configurazione TypeScript
+
+I file di configurazione TypeScript offrono la migliore esperienza di sviluppo con verifica completa dei tipi e supporto IDE.
+
+**Installazione:**
+
+Per usare la configurazione TypeScript o JavaScript con `defineConfig`, devi installare Repomix come dipendenza di sviluppo:
+
+```bash
+npm install -D repomix
+```
+
+**Esempio:**
+
+```typescript
+// repomix.config.ts
+import { defineConfig } from 'repomix';
+
+export default defineConfig({
+  output: {
+    filePath: 'output.xml',
+    style: 'xml',
+    removeComments: true,
+  },
+  ignore: {
+    customPatterns: ['**/node_modules/**', '**/dist/**'],
+  },
+});
+```
+
+**Vantaggi:**
+- ✅ Verifica completa dei tipi TypeScript nel tuo IDE
+- ✅ Eccellente autocompletamento e IntelliSense
+- ✅ Utilizzo di valori dinamici (timestamp, variabili d'ambiente, ecc.)
+
+**Esempio di Valori Dinamici:**
+
+```typescript
+// repomix.config.ts
+import { defineConfig } from 'repomix';
+
+// Genera un nome file basato sul timestamp
+const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+
+export default defineConfig({
+  output: {
+    filePath: `output-${timestamp}.xml`,
+    style: 'xml',
+  },
+});
+```
+
+### Configurazione JavaScript
+
+I file di configurazione JavaScript funzionano allo stesso modo di TypeScript, supportando `defineConfig` e valori dinamici.
+
+## Opzioni di Configurazione
+
+| Opzione                           | Descrizione                                                                                                                  | Predefinito                |
+|----------------------------------|------------------------------------------------------------------------------------------------------------------------------|------------------------|
+| `input.maxFileSize`              | Dimensione massima dei file da elaborare in byte. I file più grandi saranno ignorati. Utile per escludere file binari grandi o file di dati | `50000000`            |
+| `input.processors`               | Array ordinato di voci `{ pattern, command, timeout?, onError? }` che eseguono un comando esterno per trasformare i file corrispondenti prima dell'impacchettamento (es. JSON→TOON). Il primo glob corrispondente vince. Esegue comandi arbitrari, quindi viene eseguito solo per le esecuzioni CLI locali (e i repository remoti con `--remote-trust-config`). Vedi [Processori di File](#processori-di-file) | Non impostato          |
+| `output.filePath`                | Nome del file di output. Supporta formati XML, Markdown e testo semplice                                            | `"repomix-output.xml"` |
+| `output.style`                   | Stile di output (`xml`, `markdown`, `json`, `plain`). Ogni formato ha i suoi vantaggi per diversi strumenti IA              | `"xml"`                |
+| `output.filePathStyle`           | Come i percorsi dei file vengono mostrati nell'output (`target-relative` mantiene i percorsi relativi alla radice di ciascun target, `cwd-relative` mantiene i percorsi relativi alla directory di lavoro corrente) | `"target-relative"`    |
+| `output.parsableStyle`           | Se effettuare l'escape dell'output secondo lo schema di stile scelto. Permette una migliore analisi ma può aumentare il conteggio token | `false`                |
+| `output.compress`                | Se eseguire l'estrazione intelligente del codice usando Tree-sitter per ridurre il conteggio token preservando la struttura | `false`                |
+| `output.patterns`                | Livelli di inclusione per file. Un array ordinato di voci `{ pattern, compress?, directoryStructureOnly? }`; il primo glob corrispondente vince e sovrascrive l'impostazione globale `output.compress` per quel file. Vedi [Livelli di Inclusione per File](#livelli-di-inclusione-per-file) | Non impostato          |
+| `output.headerText`              | Testo personalizzato da includere nell'intestazione del file. Utile per fornire contesto o istruzioni agli strumenti IA   | `null`                 |
+| `output.instructionFilePath`     | Percorso a un file contenente istruzioni personalizzate dettagliate per l'elaborazione IA                      | `null`                 |
+| `output.fileSummary`             | Se includere una sezione riepilogo all'inizio mostrando il conteggio file, dimensioni e altre metriche  | `true`                 |
+| `output.directoryStructure`      | Se includere la struttura delle directory nell'output. Aiuta l'IA a capire l'organizzazione del progetto      | `true`                 |
+| `output.files`                   | Se includere il contenuto dei file nell'output. Impostare a false per includere solo struttura e metadati | `true`                 |
+| `output.removeComments`          | Se rimuovere i commenti dai tipi di file supportati. Può ridurre il rumore e il conteggio token | `false`                |
+| `output.removeEmptyLines`        | Se rimuovere le righe vuote dall'output per ridurre il conteggio token                                   | `false`                |
+| `output.showLineNumbers`         | Se aggiungere numeri di riga a ogni riga. Utile per riferirsi a parti specifiche del codice        | `false`                |
+| `output.truncateBase64`          | Se troncare le stringhe di dati base64 lunghe (es. immagini) per ridurre il conteggio token | `false`                |
+| `output.copyToClipboard`         | Se copiare l'output negli appunti di sistema oltre a salvare il file                         | `false`                |
+| `output.splitOutput`             | Dividi l'output in più file numerati per dimensione massima per parte (es., `1000000` per ~1MB). CLI accetta dimensioni leggibili come `500kb` o `2mb`. Mantiene ogni file sotto il limite ed evita di dividere i file di origine tra le parti | Non impostato |
+| `output.tokenBudget`             | Termina con un codice di uscita diverso da zero quando l'output impacchettato supera questo numero di token. Funge da protezione per i limiti di contesto CI/agente; l'output viene comunque generato | Non impostato |
+| `output.topFilesLength`          | Numero dei file principali da mostrare nel riepilogo. Se impostato a 0, nessun riepilogo sarà mostrato                        | `5`                    |
+| `output.includeEmptyDirectories` | Se includere le directory vuote nella struttura del repository                                                   | `false`                |
+| `output.includeFullDirectoryStructure` | Quando si usano pattern `include`, se mostrare l'albero completo delle directory (rispettando i pattern ignore) mentre si elaborano solo i file inclusi. Fornisce contesto completo del repository per l'analisi IA | `false`                |
+| `output.git.sortByChanges`       | Se ordinare i file per numero di modifiche git. I file con più modifiche appaiono in fondo | `true`                 |
+| `output.git.sortByChangesMaxCommits` | Numero massimo di commit da analizzare per le modifiche git. Limita la profondità della cronologia per le prestazioni | `100`                  |
+| `output.git.includeDiffs`        | Se includere i diff git nell'output. Mostra separatamente le modifiche dell'albero di lavoro e le modifiche staged | `false`                |
+| `output.git.includeLogs`         | Se includere i log git nell'output. Mostra la cronologia dei commit con date, messaggi e percorsi file | `false`                |
+| `output.git.includeLogsCount`    | Numero di commit git recenti da includere nell'output                                                                          | `50`                   |
+| `include`                        | Pattern dei file da includere usando [pattern glob](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax) | `[]`                   |
+| `ignore.useGitignore`            | Se usare i pattern dal file `.gitignore` del progetto                                                      | `true`                 |
+| `ignore.useDotIgnore`            | Se usare i pattern dal file `.ignore` del progetto                                                         | `true`                 |
+| `ignore.useDefaultPatterns`      | Se usare i pattern di ignore predefiniti (node_modules, .git, ecc.)                                    | `true`                 |
+| `ignore.customPatterns`          | Pattern aggiuntivi da ignorare usando [pattern glob](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax) | `[]`                   |
+| `security.enableSecurityCheck`   | Se eseguire controlli di sicurezza usando Secretlint per rilevare informazioni sensibili   | `true`                 |
+| `tokenCount.encoding`            | Encoding del conteggio token compatibile con OpenAI (ad es., `o200k_base` per GPT-4o, `cl100k_base` per GPT-4/3.5). Utilizza [gpt-tokenizer](https://github.com/nicolo-ribaudo/gpt-tokenizer). | `"o200k_base"`         |
+
+Il file di configurazione supporta la sintassi [JSON5](https://json5.org/), che permette:
+- Commenti (sia su singola riga che su più righe)
+- Virgole finali in oggetti e array
+- Nomi di proprietà non tra virgolette
+- Sintassi stringa più flessibile
+
+## Validazione Schema
+
+Puoi abilitare la validazione schema per il tuo file di configurazione aggiungendo la proprietà `$schema`:
+
+```json
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "output": {
+    "filePath": "repomix-output.md",
+    "style": "markdown"
+  }
+}
+```
+
+Questo fornisce autocompletamento e validazione negli editor che supportano gli schema JSON.
+
+## Esempio di File di Configurazione
+
+Ecco un esempio completo di file di configurazione (`repomix.config.json`):
+
+```json
+{
+  "$schema": "https://repomix.com/schemas/latest/schema.json",
+  "input": {
+    "maxFileSize": 50000000,
+    // "processors": [
+    //   { "pattern": "**/*.json", "command": "npx @toon-format/cli {file}" }
+    // ]
+  },
+  "output": {
+    "filePath": "repomix-output.xml",
+    "style": "xml",
+    "filePathStyle": "target-relative",
+    "parsableStyle": false,
+    "compress": false,
+    "headerText": "Informazioni di intestazione personalizzate per il file compresso.",
+    "fileSummary": true,
+    "directoryStructure": true,
+    "files": true,
+    "removeComments": false,
+    "removeEmptyLines": false,
+    "topFilesLength": 5,
+    "showLineNumbers": false,
+    // "patterns": [
+    //   { "pattern": "docs/**/*", "compress": true },
+    //   { "pattern": "website/**/*", "directoryStructureOnly": true }
+    // ],
+    "truncateBase64": false,
+    "copyToClipboard": false,
+    "includeEmptyDirectories": false,
+    "git": {
+      "sortByChanges": true,
+      "sortByChangesMaxCommits": 100,
+      "includeDiffs": false,
+      "includeLogs": false,
+      "includeLogsCount": 50
+    }
+  },
+  "include": ["**/*"],
+  "ignore": {
+    "useGitignore": true,
+    "useDefaultPatterns": true,
+    // I pattern possono essere specificati anche in .repomixignore
+    "customPatterns": [
+      "additional-folder",
+      "**/*.log"
+    ],
+  },
+  "security": {
+    "enableSecurityCheck": true
+  },
+  "tokenCount": {
+    "encoding": "o200k_base"
+  }
+}
+```
+
+## Posizioni dei File di Configurazione
+
+Repomix cerca i file di configurazione nel seguente ordine:
+1. File di configurazione locale nella directory corrente (ordine di priorità: TS > JS > JSON)
+   - TypeScript: `repomix.config.ts`, `repomix.config.mts`, `repomix.config.cts`
+   - JavaScript: `repomix.config.js`, `repomix.config.mjs`, `repomix.config.cjs`
+   - JSON: `repomix.config.json5`, `repomix.config.jsonc`, `repomix.config.json`
+2. File di configurazione globale (ordine di priorità: TS > JS > JSON)
+   - Windows:
+     - TypeScript: `%LOCALAPPDATA%\Repomix\repomix.config.ts`, `.mts`, `.cts`
+     - JavaScript: `%LOCALAPPDATA%\Repomix\repomix.config.js`, `.mjs`, `.cjs`
+     - JSON: `%LOCALAPPDATA%\Repomix\repomix.config.json5`, `.jsonc`, `.json`
+   - macOS/Linux:
+     - TypeScript: `~/.config/repomix/repomix.config.ts`, `.mts`, `.cts`
+     - JavaScript: `~/.config/repomix/repomix.config.js`, `.mjs`, `.cjs`
+     - JSON: `~/.config/repomix/repomix.config.json5`, `.jsonc`, `.json`
+
+Le opzioni da linea di comando hanno la priorità sulle impostazioni del file di configurazione.
+
+## Pattern di Inclusione
+
+Repomix supporta la specifica dei file da includere usando [pattern glob](https://github.com/mrmlnc/fast-glob?tab=readme-ov-file#pattern-syntax). Questo permette una selezione di file più flessibile e potente:
+
+- Usa `**/*.js` per includere tutti i file JavaScript in qualsiasi directory
+- Usa `src/**/*` per includere tutti i file nella directory `src` e le sue sottodirectory
+- Combina più pattern come `["src/**/*.js", "**/*.md"]` per includere i file JavaScript in `src` e tutti i file Markdown
+
+Puoi specificare pattern di inclusione nel tuo file di configurazione:
+
+```json
+{
+  "include": ["src/**/*", "tests/**/*.test.js"]
+}
+```
+
+Oppure usa l'opzione da linea di comando `--include` per filtraggio una tantum.
+
+## Pattern di Esclusione
+
+Repomix offre diversi metodi per definire pattern di esclusione per escludere file o directory specifici durante il processo di impacchettamento:
+
+- **.gitignore**: Per impostazione predefinita, i pattern elencati nei file `.gitignore` del progetto e `.git/info/exclude` sono usati. Questo comportamento può essere controllato con l'impostazione `ignore.useGitignore` o l'opzione CLI `--no-gitignore`.
+- **.ignore**: Puoi usare un file `.ignore` alla radice del progetto, seguendo lo stesso formato di `.gitignore`. Questo file è rispettato da strumenti come ripgrep e the silver searcher, riducendo la necessità di mantenere più file di esclusione. Questo comportamento può essere controllato con l'impostazione `ignore.useDotIgnore` o l'opzione CLI `--no-dot-ignore`.
+- **Pattern predefiniti**: Repomix include una lista predefinita di file e directory comunemente esclusi (es. node_modules, .git, file binari). Questa funzionalità può essere controllata con l'impostazione `ignore.useDefaultPatterns` o l'opzione CLI `--no-default-patterns`. Consulta [defaultIgnore.ts](https://github.com/yamadashy/repomix/blob/main/src/config/defaultIgnore.ts) per dettagli.
+- **.repomixignore**: Puoi creare un file `.repomixignore` alla radice del progetto per definire pattern di esclusione specifici per Repomix. Questo file segue lo stesso formato di `.gitignore`.
+- **Pattern personalizzati**: Pattern di esclusione aggiuntivi possono essere specificati usando l'opzione `ignore.customPatterns` nel file di configurazione. Puoi sovrascrivere questa impostazione con l'opzione da linea di comando `-i, --ignore`.
+
+**Ordine di priorità** (dal più alto al più basso):
+
+1. Pattern personalizzati (`ignore.customPatterns`)
+2. File di esclusione (`.repomixignore`, `.ignore`, `.gitignore`, e `.git/info/exclude`):
+   - Quando sono in directory annidate, i file nelle directory più profonde hanno priorità maggiore
+   - Quando sono nella stessa directory, questi file sono uniti senza ordine particolare
+3. Pattern predefiniti (se `ignore.useDefaultPatterns` è true e `--no-default-patterns` non è usato)
+
+Questo approccio permette una configurazione flessibile dell'esclusione dei file in base alle esigenze del progetto. Aiuta a ottimizzare la dimensione del file impacchettato generato garantendo l'esclusione di file sensibili alla sicurezza e grandi file binari, mentre previene la fuga di informazioni confidenziali.
+
+**Nota:** I file binari non sono inclusi nell'output impacchettato per impostazione predefinita, ma i loro percorsi sono elencati nella sezione "Struttura del Repository" del file di output. Questo fornisce una panoramica completa della struttura del repository mantenendo il file impacchettato efficiente e basato su testo. Vedi [Gestione File Binari](#gestione-file-binari) per dettagli.
+
+Esempio di `.repomixignore`:
+```text
+# Directory di cache
+.cache/
+tmp/
+
+# Output di build
+dist/
+build/
+
+# Log
+*.log
+```
+
+## Pattern di Esclusione Predefiniti
+
+Quando `ignore.useDefaultPatterns` è true, Repomix ignora automaticamente i pattern comuni:
+```text
+node_modules/**
+.git/**
+coverage/**
+dist/**
+```
+
+Per la lista completa, vedi [defaultIgnore.ts](https://github.com/yamadashy/repomix/blob/main/src/config/defaultIgnore.ts)
+
+## Gestione File Binari
+
+I file binari (come immagini, PDF, binari compilati, archivi, ecc.) sono trattati in modo speciale per mantenere un output efficiente basato su testo:
+
+- **Contenuti dei file**: I file binari **non sono inclusi** nell'output impacchettato per mantenere il file basato su testo ed efficiente per l'elaborazione IA
+- **Struttura delle directory**: I percorsi dei file binari **sono elencati** nella sezione struttura directory, fornendo una panoramica completa del repository
+
+Questo approccio garantisce che ottieni una vista completa della struttura del repository mantenendo un output efficiente basato su testo ottimizzato per il consumo dell'IA.
+
+**Esempio:**
+
+Se il tuo repository contiene `logo.png` e `app.jar`:
+- Appariranno nella sezione Struttura Directory
+- I loro contenuti non saranno inclusi nella sezione File
+
+**Output struttura directory:**
+```
+src/
+  index.ts
+  utils.ts
+assets/
+  logo.png
+build/
+  app.jar
+```
+
+In questo modo, gli strumenti IA possono capire che questi file binari esistono nella struttura del progetto senza elaborare i loro contenuti binari.
+
+**Nota:** Puoi controllare la soglia massima della dimensione dei file usando l'opzione di configurazione `input.maxFileSize` (predefinito: 50MB). I file più grandi di questo limite saranno completamente ignorati.
+
+## Funzionalità Avanzate
+
+### Compressione del Codice
+
+La funzionalità di compressione del codice, abilitata con `output.compress: true`, usa [Tree-sitter](https://github.com/tree-sitter/tree-sitter) per estrarre intelligentemente le strutture di codice essenziali mentre rimuove i dettagli di implementazione. Questo aiuta a ridurre il conteggio token mantenendo le informazioni strutturali importanti.
+
+Vantaggi principali:
+- Riduce significativamente il conteggio token
+- Preserva le firme di classi e funzioni
+- Mantiene import ed export
+- Conserva le definizioni di tipi e le interfacce
+- Rimuove i corpi delle funzioni e i dettagli di implementazione
+
+Per dettagli ed esempi, consulta la [Guida alla Compressione del Codice](code-compress).
+
+### Livelli di Inclusione per File
+
+Mentre `output.compress` applica un unico livello a ogni file, `output.patterns` ti permette di controllare il livello di dettaglio **per glob** dal tuo file di configurazione. Ogni voce seleziona i file tramite glob (con la stessa corrispondenza di `include`/`ignore`) e sovrascrive l'impostazione globale `output.compress` per i file corrispondenti.
+
+```json5
+{
+  "output": {
+    "compress": false, // il valore predefinito globale funge da catch-all
+    "patterns": [
+      { "pattern": "docs/**/*", "compress": true },
+      { "pattern": "website/**/*", "directoryStructureOnly": true }
+    ]
+  }
+}
+```
+
+Ogni file viene risolto a uno dei tre livelli:
+
+- **Contenuto completo** (predefinito): viene incluso il contenuto completo del file.
+- **Compresso** (`compress: true`): il contenuto viene elaborato attraverso la stessa pipeline Tree-sitter di `output.compress`.
+- **Solo struttura delle directory** (`directoryStructureOnly: true`): il file viene elencato nella struttura delle directory, ma il suo blocco di contenuto viene completamente omesso dall'output.
+
+Le regole:
+
+- I pattern vengono valutati nell'ordine dell'array e **vince il primo pattern corrispondente** per un dato file.
+- I flag di un pattern corrispondente sovrascrivono l'impostazione globale `output.compress`. Un pattern che corrisponde senza impostare alcun flag forza il **contenuto completo** per quel file, il che è utile per inserire file in whitelist escludendoli da un `compress` globale.
+- `directoryStructureOnly` ha la precedenza su `compress` quando entrambi sono impostati sullo stesso pattern.
+- Se nessun pattern corrisponde, si applica il comportamento globale (contenuto completo, oppure compresso quando `output.compress` è `true`).
+
+Questa opzione è disponibile solo nel file di configurazione; non esiste un'opzione CLI equivalente.
+
+### Processori di File
+
+`input.processors` esegue un comando esterno per trasformare il contenuto di un file **prima** che venga impacchettato. Ogni voce seleziona i file tramite glob (con la stessa corrispondenza di `include`/`ignore`) e sostituisce il contenuto dei file corrispondenti con l'output standard del comando. Questo è utile per trasformazioni che riducono i token o convertono il formato, ad esempio convertire JSON in [TOON](https://github.com/toon-format/toon), minificare SVG, o convertire notebook in script semplici.
+
+```json5
+{
+  "input": {
+    "processors": [
+      {
+        "pattern": "**/*.json",
+        "command": "npx @toon-format/cli {file}"
+      }
+    ]
+  }
+}
+```
+
+Come funziona:
+
+- Repomix scrive il contenuto di ogni file corrispondente in un file temporaneo e sostituisce il suo percorso al placeholder `{file}` nel comando (il placeholder è **obbligatorio**).
+- Il comando viene eseguito tramite la shell, quindi pipe e strumenti come `npx` funzionano. Il suo output standard diventa il nuovo contenuto del file, che poi attraversa il resto della pipeline (controllo di sicurezza, conteggio token e generazione dell'output) come qualsiasi altro file.
+- I pattern vengono valutati nell'ordine dell'array e **vince il primo pattern corrispondente** — un file viene trasformato da al massimo un processore (nessun concatenamento).
+
+Opzioni per processore:
+
+- `timeout`: Tempo massimo in millisecondi da attendere per il comando. Predefinito: `60000` (60s). Nota che `npx` potrebbe richiedere tempo aggiuntivo per scaricare un pacchetto con cache fredda.
+- `onError`: Cosa fare quando il comando termina con uno stato diverso da zero o va in timeout. `"fail"` (predefinito) interrompe l'intero pack; `"skip"` registra un avviso e ripiega sul contenuto originale del file.
+
+Comandi di esempio (ciascuno è un valore `command` abbinato a un `pattern` appropriato):
+
+| Pattern | `command` | Cosa fa |
+| --- | --- | --- |
+| `**/*.json` | `jq -c . {file}` | Compatta il JSON rimuovendo gli spazi bianchi |
+| `**/*.json` | `npx @toon-format/cli {file}` | Converte il JSON in [TOON](https://github.com/toon-format/toon), un formato compatto ed efficiente in termini di token |
+| `**/*.svg` | `npx svgo -i {file} -o -` | Minimizza l'SVG |
+| `**/*.ipynb` | `jupyter nbconvert --to script --stdout {file}` | Converte un notebook Jupyter in un semplice script Python |
+
+Poiché vince il primo pattern corrispondente, applica un solo processore per file — ad esempio scegli `jq` oppure il convertitore TOON per `**/*.json`. Il comando deve scrivere il contenuto trasformato sullo standard output e lo strumento che invoca deve essere disponibile nel tuo `PATH` (i comandi basati su `npx` scaricano lo strumento al primo utilizzo).
+
+::: warning Sicurezza
+I processori di file eseguono **comandi arbitrari** dal tuo file di configurazione, quindi seguono un modello di fiducia rigoroso:
+
+- Vengono eseguiti **solo per le esecuzioni CLI locali**, dove Repomix presume che la configurazione nella tua directory di lavoro sia tua — lo stesso confine di fiducia di uno script npm o di un Makefile. Allo stesso modo, se esegui `repomix` all'interno di un repository ottenuto da qualcun altro **senza prima esaminarne il `repomix.config.json`**, i suoi comandi dei processori verranno eseguiti sulla tua macchina. Esamina la configurazione dei repository non affidabili prima di eseguirne il pack.
+- Sono **disabilitati** per la library API (`pack()` / `runCli()`), il server MCP e la versione hosted di [repomix.com](https://repomix.com), quindi nessuno di questi può eseguire comandi da una configurazione.
+- Per i repository remoti (`--remote`), la configurazione del repository clonato — e quindi i suoi processori — è considerata affidabile solo quando passi esplicitamente `--remote-trust-config`. Senza di esso, la configurazione remota non viene nemmeno caricata.
+
+I processori attivi vengono registrati all'avvio, in modo che processori inattesi provenienti da una configurazione non familiare siano visibili. Poiché il comando viene stampato all'avvio e nei messaggi di errore, fai riferimento alle credenziali tramite variabili d'ambiente (ad es. `$TOKEN`), che vengono registrate senza essere espanse, invece di inserirle direttamente nel comando.
+:::
+
+Note:
+
+- Combinare un processore **che modifica il formato** con `output.compress`, `output.removeComments`, o un `compress` di `output.patterns` sullo stesso file non è consigliato: questi passaggi vengono selezionati in base all'estensione originale del file, quindi eseguirebbero il gestore del linguaggio sbagliato sul contenuto trasformato. Per lo stesso motivo, l'output Markdown etichetta il blocco di codice in base all'estensione originale (es. un file JSON→TOON viene racchiuso come `json`). La compressione è best-effort e ripiega silenziosamente sul contenuto trasformato in caso di errore di parsing.
+- Con `--watch`, i file corrispondenti vengono rielaborati a ogni rebuild, il che riesegue il comando ogni volta.
+- In caso di timeout, Repomix termina la shell del comando; un comando che avvia propri processi in background di lunga durata potrebbe lasciarli in esecuzione.
+- I processori vedono solo file di testo (i file binari sono esclusi prima dell'elaborazione), e il loro output viene letto come UTF-8.
+
+### Integrazione Git
+
+La configurazione `output.git` fornisce potenti funzionalità relative a Git:
+
+- `sortByChanges`: Quando true, i file sono ordinati per numero di modifiche Git (commit che hanno modificato il file). I file con più modifiche appaiono in fondo all'output. Questo aiuta a dare priorità ai file più attivamente sviluppati. Predefinito: `true`
+- `sortByChangesMaxCommits`: Il numero massimo di commit da analizzare quando si contano le modifiche ai file. Predefinito: `100`
+- `includeDiffs`: Quando true, include i diff Git nell'output (include separatamente le modifiche dell'albero di lavoro e le modifiche staged). Questo permette al lettore di vedere le modifiche in sospeso nel repository. Predefinito: `false`
+- `includeLogs`: Quando true, include la cronologia dei commit Git nell'output. Mostra le date dei commit, i messaggi e i percorsi dei file per ogni commit. Questo aiuta l'IA a comprendere i pattern di sviluppo e le relazioni tra file. Predefinito: `false`
+- `includeLogsCount`: Il numero di commit recenti da includere nei log git. Predefinito: `50`
+
+Esempio di configurazione:
+```json
+{
+  "output": {
+    "git": {
+      "sortByChanges": true,
+      "sortByChangesMaxCommits": 100,
+      "includeDiffs": true,
+      "includeLogs": true,
+      "includeLogsCount": 25
+    }
+  }
+}
+```
+
+### Controlli di Sicurezza
+
+Quando `security.enableSecurityCheck` è abilitato, Repomix usa [Secretlint](https://github.com/secretlint/secretlint) per rilevare informazioni sensibili nella tua codebase prima di includerle nell'output. Questo aiuta a prevenire l'esposizione accidentale di:
+
+- Chiavi API
+- Token di accesso
+- Chiavi private
+- Password
+- Altre credenziali sensibili
+
+### Rimozione Commenti
+
+Quando `output.removeComments` è impostato a `true`, i commenti sono rimossi dai tipi di file supportati per ridurre la dimensione dell'output e concentrarsi sul contenuto essenziale del codice. Questo può essere particolarmente utile quando:
+
+- Lavori con codice fortemente documentato
+- Cerchi di ridurre il conteggio token
+- Ti concentri sulla struttura e la logica del codice
+
+Per i linguaggi supportati e esempi dettagliati, consulta la [Guida alla Rimozione Commenti](comment-removal).
+
+## Risorse correlate
+
+- [Opzioni da Linea di Comando](/it/guide/command-line-options) - Riferimento completo della CLI (le opzioni CLI sovrascrivono le impostazioni del file di configurazione)
+- [Formati di Output](/it/guide/output) - Dettagli su ogni formato di output
+- [Sicurezza](/it/guide/security) - Come Repomix rileva le informazioni sensibili
+- [Compressione Codice](/it/guide/code-compress) - Ridurre il conteggio token con Tree-sitter
+- [Elaborazione Repository Remoti](/it/guide/remote-repository-processing) - Opzioni per i repository remoti

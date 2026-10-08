@@ -1,0 +1,126 @@
+---
+title: "Procesamiento de repositorios de GitHub"
+description: "Empaqueta repositorios de GitHub con Repomix usando URLs completas, abreviatura user/repo, ramas, etiquetas, commits, Docker y controles de confianza para configuración remota."
+---
+
+# Procesamiento de repositorios de GitHub
+
+## Uso básico
+
+Procesar repositorios públicos:
+```bash
+# Usando URL completo
+repomix --remote https://github.com/usuario/repositorio
+
+# Usando la abreviatura de GitHub
+repomix --remote usuario/repositorio
+```
+
+También puedes pasar la abreviatura `owner/repo` directamente, sin `--remote`:
+
+```bash
+repomix yamadashy/repomix
+```
+
+Como `owner/repo` también se parece a una ruta local relativa, Repomix solo lo trata como un repositorio remoto cuando no existe ningún archivo o directorio local con ese nombre y el repositorio es accesible en GitHub. Una ruta local existente siempre tiene prioridad; para forzar el tratamiento local de una ruta con forma `owner/repo`, antepón `./` (por ejemplo, `repomix ./owner/repo`). Si el argumento coincide con el patrón pero no se puede acceder al repositorio (por ejemplo, un repositorio privado o un error tipográfico), Repomix lo trata como una ruta local.
+
+## Selección de rama y commit
+
+```bash
+# Rama específica
+repomix --remote usuario/repositorio --remote-branch main
+
+# Etiqueta
+repomix --remote usuario/repositorio --remote-branch v1.0.0
+
+# Hash de commit
+repomix --remote usuario/repositorio --remote-branch 935b695
+```
+
+## Requisitos
+
+- Git debe estar instalado
+- Conexión a Internet
+- Acceso de lectura al repositorio
+
+## Control de salida
+
+```bash
+# Ubicación de salida personalizada
+repomix --remote usuario/repositorio -o salida-personalizada.xml
+
+# Con formato XML
+repomix --remote usuario/repositorio --style xml
+
+# Eliminar comentarios
+repomix --remote usuario/repositorio --remove-comments
+```
+
+## Uso de Docker
+
+```bash
+# Procesar y generar la salida en el directorio actual
+docker run -v .:/app -it --rm ghcr.io/yamadashy/repomix \
+  --remote usuario/repositorio
+
+# Generar la salida en un directorio específico
+docker run -v ./output:/app -it --rm ghcr.io/yamadashy/repomix \
+  --remote usuario/repositorio
+```
+
+## Seguridad
+
+Por seguridad, los archivos de configuración (`repomix.config.*`) de los repositorios remotos no se cargan de forma predeterminada. Esto evita que repositorios no confiables ejecuten código a través de archivos de configuración como `repomix.config.ts`.
+
+Tu configuración global y las opciones de CLI se siguen aplicando.
+
+Para confiar en la configuración de un repositorio remoto:
+
+```bash
+# Usando el flag de CLI
+repomix --remote usuario/repositorio --remote-trust-config
+
+# Usando una variable de entorno
+REPOMIX_REMOTE_TRUST_CONFIG=true repomix --remote usuario/repositorio
+```
+
+::: warning
+`--remote-trust-config` otorga a la configuración del repositorio remoto el mismo nivel de confianza que a tu propia máquina. Una configuración de confianza puede **ejecutar comandos arbitrarios** (mediante `input.processors`) y **leer archivos locales fuera del repositorio** (por ejemplo, mediante `output.instructionFilePath` o patrones de inclusión que usen `../`). Úsala solo para repositorios en los que confíes plenamente y que hayas revisado, con la misma precaución que aplicarías antes de ejecutar un `npm install` o un `Makefile` de una fuente desconocida.
+:::
+
+### Solicitud de confirmación
+
+Cuando confías en la configuración de un repositorio en una terminal interactiva, repomix muestra la configuración que está a punto de ejecutarse y te pide que confirmes antes de cargarla:
+
+- **Sí, solo esta vez**: confía únicamente en esta ejecución.
+- **Sí, y no preguntar de nuevo para este repositorio**: se recuerda hasta que se borren tus archivos temporales, y solo mientras ese archivo de configuración no cambie (un archivo de configuración modificado vuelve a preguntar). Ten en cuenta que esto solo cubre el propio archivo de configuración: una configuración `.ts` / `.js` puede importar otros archivos, y esos no forman parte de la comprobación.
+- **No**: aborta sin ejecutar la configuración.
+
+La solicitud se omite si pasas `--force`, en shells no interactivos como CI (la configuración se considera de confianza como antes, manteniendo funcionando la automatización existente), o una vez que has elegido confiar siempre en ese repositorio.
+
+Para conocer el modelo de confianza completo (qué puede hacer una configuración de confianza, cómo se protege de manipulaciones la configuración mostrada y dónde se guarda la decisión de "no preguntar de nuevo") consulta [Seguridad](/es/guide/security#remote-repository-config-trust).
+
+Al usar `--config` con `--remote`, se requiere una ruta absoluta:
+
+```bash
+repomix --remote usuario/repositorio --config /home/user/repomix.config.json
+```
+
+## Problemas comunes
+
+### Problemas de acceso
+- Asegúrate de que el repositorio sea público
+- Comprueba la instalación de Git
+- Verifica la conexión a Internet
+
+### Repositorios grandes
+- Usa `--include` para seleccionar rutas específicas
+- Habilita `--remove-comments`
+- Procesa las ramas por separado
+
+## Recursos relacionados
+
+- [Opciones de línea de comandos](/es/guide/command-line-options) - Referencia completa de CLI incluyendo opciones `--remote`
+- [Configuración](/es/guide/configuration) - Configurar opciones predeterminadas para procesamiento remoto
+- [Compresión de código](/es/guide/code-compress) - Reducir el tamaño de salida para repositorios grandes
+- [Seguridad](/es/guide/security) - Cómo Repomix maneja la detección de datos sensibles

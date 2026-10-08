@@ -1,0 +1,126 @@
+---
+title: GitHub 仓库处理
+description: 使用完整 URL、user/repo 简写、分支、标签、提交、Docker 和远程配置可信控制，通过 Repomix 打包 GitHub 仓库。
+---
+
+# GitHub 仓库处理
+
+## 基本用法
+
+处理公共仓库：
+```bash
+# 使用完整 URL
+repomix --remote https://github.com/user/repo
+
+# 使用 GitHub 简写
+repomix --remote user/repo
+```
+
+你也可以直接传入 `owner/repo` 简写，而无需 `--remote`：
+
+```bash
+repomix yamadashy/repomix
+```
+
+由于 `owner/repo` 看起来也像相对本地路径，因此只有当不存在同名的本地文件或目录、且该仓库在 GitHub 上可访问时，Repomix 才会将其视为远程仓库。已存在的本地路径始终优先；若要强制将 `owner/repo` 形式的路径作为本地路径处理，请在前面加上 `./`（例如 `repomix ./owner/repo`）。如果参数匹配该格式但仓库无法访问（例如私有仓库或拼写错误），Repomix 会回退为将其作为本地路径处理。
+
+## 分支和提交选择
+
+```bash
+# 指定分支
+repomix --remote user/repo --remote-branch main
+
+# 指定标签
+repomix --remote user/repo --remote-branch v1.0.0
+
+# 指定提交哈希
+repomix --remote user/repo --remote-branch 935b695
+```
+
+## 系统要求
+
+- 必须安装 Git
+- 需要网络连接
+- 需要仓库的读取权限
+
+## 输出控制
+
+```bash
+# 自定义输出位置
+repomix --remote user/repo -o custom-output.xml
+
+# 使用 XML 格式
+repomix --remote user/repo --style xml
+
+# 移除注释
+repomix --remote user/repo --remove-comments
+```
+
+## Docker 使用方法
+
+```bash
+# 在当前目录处理并输出
+docker run -v .:/app -it --rm ghcr.io/yamadashy/repomix \
+  --remote user/repo
+
+# 输出到指定目录
+docker run -v ./output:/app -it --rm ghcr.io/yamadashy/repomix \
+  --remote user/repo
+```
+
+## 安全性
+
+出于安全考虑，远程仓库中的配置文件（`repomix.config.*`）默认不会被加载。这可以防止不受信任的仓库通过 `repomix.config.ts` 等配置文件执行代码。
+
+你的全局配置和 CLI 选项仍然会正常生效。
+
+如需信任远程仓库的配置：
+
+```bash
+# 使用 CLI 标志
+repomix --remote user/repo --remote-trust-config
+
+# 使用环境变量
+REPOMIX_REMOTE_TRUST_CONFIG=true repomix --remote user/repo
+```
+
+::: warning
+`--remote-trust-config` 会让远程仓库的配置获得与本机同等的信任。被信任的配置可以（通过 `input.processors`）**执行任意命令**，也可以（例如通过 `output.instructionFilePath` 或使用 `../` 的 include 模式）**读取仓库之外的本地文件**。请仅在你完全信任并已审查过的仓库中使用它，这应与运行来自陌生来源的 `npm install` 或 `Makefile` 之前保持的谨慎程度相同。
+:::
+
+### 确认提示
+
+当你在交互式终端中信任某个仓库的配置时，repomix 会显示即将运行的配置，并在加载前要求你确认：
+
+- **仅本次同意**：仅信任这一次运行。
+- **同意，且不再询问此仓库**：会一直记住，直到清除临时文件为止，且仅在该配置文件保持不变时有效（配置文件被修改后会再次提示）。请注意，此检查仅针对配置文件本身：`.ts` / `.js` 配置可以导入其他文件，这些文件不在检查范围内。
+- **否**：中止操作，不运行该配置。
+
+当你传入 `--force`、在 CI 等非交互式 shell 中运行（配置会像以前一样被信任，从而保持现有自动化正常工作），或者你已经选择始终信任该仓库时，将跳过此提示。
+
+关于完整的信任模型 —— 受信任的配置能做什么、展示的配置如何防止被篡改，以及“不再询问”的决定保存在哪里 —— 请参阅[安全性](/zh-cn/guide/security#remote-repository-config-trust)。
+
+在 `--remote` 模式下使用 `--config` 时，必须指定绝对路径：
+
+```bash
+repomix --remote user/repo --config /home/user/repomix.config.json
+```
+
+## 常见问题
+
+### 访问问题
+- 确保仓库是公开的
+- 检查 Git 是否已安装
+- 验证网络连接
+
+### 大型仓库处理
+- 使用 `--include` 选择特定路径
+- 启用 `--remove-comments`
+- 分开处理不同分支
+
+## 相关资源
+
+- [命令行选项](/zh-cn/guide/command-line-options) - 完整的 CLI 参考，包括 `--remote` 选项
+- [配置](/zh-cn/guide/configuration) - 为远程处理设置默认选项
+- [代码压缩](/zh-cn/guide/code-compress) - 为大型仓库减少输出大小
+- [安全](/zh-cn/guide/security) - Repomix 如何处理敏感数据检测

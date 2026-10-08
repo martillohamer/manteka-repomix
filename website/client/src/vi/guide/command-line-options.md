@@ -1,0 +1,222 @@
+---
+title: Tùy chọn Dòng lệnh
+description: Tham khảo mọi tùy chọn Repomix CLI cho input, output, chọn file, repository remote, cấu hình, bảo mật, đếm token, MCP và agent skills.
+---
+
+# Tùy chọn Dòng lệnh
+
+## Tùy chọn Cơ bản
+- `-v, --version`: Hiển thị phiên bản công cụ
+
+## Tùy chọn Đầu vào/Đầu ra CLI
+
+| Tùy chọn | Mô tả |
+|-----------|-------|
+| `--verbose` | Bật ghi nhật ký debug chi tiết (hiển thị xử lý tệp, số lượng token và chi tiết cấu hình) |
+| `--quiet` | Ẩn tất cả đầu ra console ngoại trừ lỗi (hữu ích cho scripting) |
+| `--stdout` | Ghi đầu ra đã đóng gói trực tiếp sang stdout thay vì tệp (ẩn tất cả ghi nhật ký) |
+| `--stdin` | Đọc đường dẫn tệp từ stdin, mỗi dòng một đường dẫn (các tệp được chỉ định được xử lý trực tiếp) |
+| `--copy` | Sao chép đầu ra đã tạo vào clipboard hệ thống sau khi xử lý |
+| `--token-count-tree [threshold]` | Hiển thị cây tệp với số lượng token; ngưỡng tùy chọn để chỉ hiển thị tệp có ≥N token (ví dụ: `--token-count-tree 100`) |
+| `--top-files-len <number>` | Số lượng tệp lớn nhất để hiển thị trong tóm tắt (mặc định: `5`) |
+
+## Tùy chọn Đầu ra Repomix
+
+| Tùy chọn | Mô tả |
+|-----------|-------|
+| `-o, --output <file>` | Đường dẫn tệp đầu ra (mặc định: `repomix-output.xml`, sử dụng `"-"` cho stdout) |
+| `--style <style>` | Định dạng đầu ra: `xml`, `markdown`, `json`, hoặc `plain` (mặc định: `xml`) |
+| `--output-file-path-style <style>` | Cách hiển thị đường dẫn tệp trong đầu ra: `target-relative` hoặc `cwd-relative` (mặc định: `target-relative`) |
+| `--parsable-style` | Escape các ký tự đặc biệt để đảm bảo XML/Markdown hợp lệ (cần thiết khi đầu ra chứa mã phá vỡ định dạng) |
+| `--compress` | Trích xuất cấu trúc mã cần thiết (lớp, hàm, interface) sử dụng phân tích Tree-sitter |
+| `--output-show-line-numbers` | Thêm số dòng trước mỗi dòng trong đầu ra |
+| `--no-file-summary` | Bỏ phần tóm tắt tệp khỏi đầu ra |
+| `--no-directory-structure` | Bỏ trực quan hóa cây thư mục khỏi đầu ra |
+| `--no-files` | Chỉ tạo metadata mà không có nội dung tệp (hữu ích cho phân tích kho lưu trữ) |
+| `--remove-comments` | Xóa tất cả bình luận mã trước khi đóng gói |
+| `--remove-empty-lines` | Xóa các dòng trống khỏi tất cả tệp |
+| `--truncate-base64` | Cắt ngắn chuỗi dữ liệu base64 dài để giảm kích thước đầu ra |
+| `--header-text <text>` | Văn bản tùy chỉnh để bao gồm ở đầu đầu ra |
+| `--instruction-file-path <path>` | Đường dẫn đến tệp chứa hướng dẫn tùy chỉnh để bao gồm trong đầu ra |
+| `--split-output <size>` | Chia đầu ra thành nhiều tệp được đánh số (ví dụ: `repomix-output.1.xml`); kích thước như `500kb`, `2mb`, hoặc `1.5mb` |
+| `--include-empty-directories` | Bao gồm các thư mục không có tệp trong cấu trúc thư mục |
+| `--include-full-directory-structure` | Hiển thị toàn bộ cây kho lưu trữ trong phần Cấu trúc Thư mục, ngay cả khi sử dụng mẫu `--include` |
+| `--no-git-sort-by-changes` | Không sắp xếp tệp theo tần suất thay đổi git (mặc định: tệp thay đổi nhiều nhất trước) |
+| `--include-diffs` | Thêm phần git diff hiển thị các thay đổi cây làm việc và đã staged |
+| `--include-logs` | Thêm lịch sử commit git với thông điệp và tệp đã thay đổi |
+| `--include-logs-count <count>` | Số commit gần đây để bao gồm với `--include-logs` (mặc định: `50`) |
+
+## Tùy chọn Lựa chọn Tệp
+
+| Tùy chọn | Mô tả |
+|-----------|-------|
+| `--include <patterns>` | Chỉ bao gồm tệp khớp với các mẫu glob này (phân tách bằng dấu phẩy, ví dụ: `"src/**/*.js,*.md"`) |
+| `-i, --ignore <patterns>` | Các mẫu bổ sung để loại trừ (phân tách bằng dấu phẩy, ví dụ: `"*.test.js,docs/**"`) |
+| `--no-gitignore` | Không sử dụng quy tắc `.gitignore` để lọc tệp |
+| `--no-dot-ignore` | Không sử dụng quy tắc `.ignore` để lọc tệp |
+| `--no-default-patterns` | Không áp dụng các mẫu bỏ qua tích hợp (`node_modules`, `.git`, thư mục build, v.v.) |
+
+## Tùy chọn Kho lưu trữ Từ xa
+
+| Tùy chọn | Mô tả |
+|-----------|-------|
+| `--remote <url>` | Clone và đóng gói kho lưu trữ từ xa (URL GitHub hoặc định dạng `user/repo`) |
+| `--remote-branch <name>` | Nhánh, tag, hoặc commit cụ thể để sử dụng (mặc định: nhánh mặc định của kho lưu trữ) |
+| `--remote-trust-config` | Tin tưởng và tải tệp cấu hình từ kho lưu trữ từ xa. Một cấu hình đáng tin cậy có thể thực thi lệnh và đọc tệp cục bộ, vì vậy chỉ sử dụng cho các kho lưu trữ mà bạn hoàn toàn tin tưởng (mặc định bị tắt vì lý do bảo mật). Trên terminal tương tác, cấu hình được hiển thị và yêu cầu xác nhận |
+
+## Tùy chọn Cấu hình
+
+| Tùy chọn | Mô tả |
+|-----------|-------|
+| `-c, --config <path>` | Sử dụng tệp cấu hình tùy chỉnh thay vì `repomix.config.json` |
+| `--init` | Tạo tệp `repomix.config.json` mới với cài đặt mặc định |
+| `--global` | Với `--init`, tạo cấu hình ở thư mục home thay vì thư mục hiện tại |
+
+## Tùy chọn Bảo mật
+- `--no-security-check`: Bỏ qua quét dữ liệu nhạy cảm như khóa API và mật khẩu
+
+## Tùy chọn Số lượng Token
+- `--token-count-encoding <encoding>`: Mô hình tokenizer để đếm: o200k_base (GPT-4o), cl100k_base (GPT-3.5/4), v.v. (mặc định: o200k_base)
+- `--token-budget <number>`: Thất bại với mã thoát khác không khi đầu ra đã đóng gói vượt quá N token. Hữu ích như một biện pháp bảo vệ trong các pipeline CI và quy trình agent để giữ đầu ra trong cửa sổ ngữ cảnh của mô hình mục tiêu. Đầu ra vẫn được tạo ra; chỉ có mã thoát báo hiệu tràn
+
+## Tùy chọn MCP
+- `--mcp`: Chạy như máy chủ Model Context Protocol để tích hợp công cụ AI
+- `--sandbox [dir]`: (cùng với `--mcp`) Giới hạn các công cụ tệp của máy chủ MCP trong một thư mục workspace (mặc định là thư mục làm việc hiện tại; ví dụ: `--sandbox path/to/project`). Mọi đường dẫn đều tương đối với gốc đó, đường dẫn tuyệt đối/host bị từ chối, và tính năng đóng gói từ xa, tạo skill, và đính kèm đầu ra bên ngoài đều bị vô hiệu hóa. Xem [Máy chủ MCP](/vi/guide/mcp-server)
+
+## Tùy chọn Tạo Agent Skills
+
+| Tùy chọn | Mô tả |
+|-----------|-------|
+| `--skill-generate [name]` | Tạo đầu ra định dạng Claude Agent Skills vào thư mục `.claude/skills/<name>/` (tên tự động tạo nếu bỏ qua) |
+| `--skill-project-name <name>` | Ghi đè tên dự án được sử dụng trong mô tả Skills được tạo |
+| `--skill-output <path>` | Chỉ định trực tiếp đường dẫn thư mục đầu ra skill (bỏ qua lời nhắc vị trí) |
+| `-f, --force` | Bỏ qua tất cả lời nhắc xác nhận (ghi đè thư mục skill, tin tưởng cấu hình từ xa) |
+
+## Tùy chọn Chế độ Theo dõi
+
+- `-w, --watch`: Theo dõi các thay đổi của tệp và tự động đóng gói lại. Các tệp mới, đã thay đổi và đã xóa được phát hiện, các thay đổi nhanh được debounce (300 ms), và một dấu thời gian được in ra sau mỗi lần xây dựng lại. Nhấn `Ctrl+C` để dừng.
+
+Chế độ theo dõi chỉ hoạt động với các thư mục cục bộ, vì vậy không thể kết hợp với `--remote`, một URL kho lưu trữ từ xa được truyền dưới dạng tham số vị trí, `--stdout`, `--stdin`, `--split-output`, `--skill-generate`, hoặc `--copy`. Các hạn chế này áp dụng dù tùy chọn được đặt trên dòng lệnh hay trong tệp cấu hình của bạn.
+
+## Lệnh Nhiệt Động Lực và Tiến Hóa
+
+Repomix cung cấp hai lệnh phân tích đọc lịch sử Git của kho lưu trữ của bạn và báo cáo nơi mã nguồn đang chịu áp lực. Cả hai đều chỉ đọc đối với cây làm việc của bạn: `heat` không bao giờ ghi bất cứ thứ gì, còn `evolve` thực hiện toàn bộ công việc trong các worktree Git dùng một lần nằm dưới thư mục tạm của bạn, để nguyên các nhánh, HEAD và công việc chưa commit của bạn.
+
+### heat
+
+Đo "nhiệt độ" của từng tệp dựa trên mức biến động của commit, số tác giả, kích thước tệp và mật độ cyclomatic, rồi liệt kê các tệp có nhiệt độ bằng hoặc vượt ngưỡng là *đang sôi*.
+
+```bash
+# Analyse the last 90 days of history
+repomix heat .
+
+# Widen the window and the report size
+repomix heat . --days 365 --limit 50
+
+# Machine-readable output
+repomix heat . --json
+```
+
+| Tùy chọn | Mặc định | Mô tả |
+| --- | --- | --- |
+| `--days <n>` | `90` | Số ngày lịch sử Git cần phân tích |
+| `--max-commits <n>` | `500` | Số commit tối đa cần phân tích |
+| `--t-max <n>` | `80` | Ngưỡng nhiệt độ để coi tệp là đang sôi |
+| `--limit <n>` | `20` | Số tệp được liệt kê trong bảng |
+| `--json` | off | Xuất báo cáo thô thay vì bảng |
+| `--no-fail` | off | Thoát với mã `0` ngay cả khi phát hiện tệp đang sôi |
+| `--report` | off | Ghi `thermodynamic-report.json` vào `.manteka-memory/` |
+
+### evolve
+
+Rẽ nhánh kho lưu trữ của bạn thành các biến dị tạm thời, đột biến các tệp đang sôi và xếp hạng các biến dị theo Chỉ Số Thể Lực Sinh Học. Mỗi biến dị được đánh giá trong worktree Git tách rời riêng của nó, nên kho lưu trữ của bạn không bao giờ bị thay đổi.
+
+```bash
+# Explore five mutants from the current HEAD
+repomix evolve .
+
+# Restrict to one operator and two files
+repomix evolve . --operator dead-guard --target src/legacy.ts
+
+# Include the project's own test suite in the score
+repomix evolve . --run-tests
+```
+
+| Tùy chọn | Mặc định | Mô tả |
+| --- | --- | --- |
+| `--population <n>` | `5` | Số biến dị tối đa được đánh giá |
+| `--operator <name>` | cả ba | Giới hạn ở một toán tử; có thể lặp lại |
+| `--target <path>` | các tệp đang sôi | Giới hạn ở các tệp cụ thể; có thể lặp lại |
+| `--concurrency <n>` | `2` | Số biến dị được đánh giá song song |
+| `--run-tests` | off | Đưa trục kiểm thử vào chỉ số thể lực |
+| `--test-timeout <ms>` | `300000` | Thời gian chờ của test suite cho mỗi biến dị |
+| `--json` | off | Xuất báo cáo thô thay vì bảng |
+| `--report` | off | Ghi `evolution-report.json` vào `.manteka-memory/` |
+
+`--target` thu hẹp phạm vi chứ không mở rộng nó: các tệp đích được giao với tập các tệp đang sôi, nên nêu tên một tệp không sôi sẽ không tạo ra biến dị nào cho tệp đó.
+
+**Ý nghĩa của thứ hạng.** Cả ba toán tử đột biến đều thêm mã, điều này làm nhiệt độ tăng nhẹ. Vì vậy, mọi biến dị đều có điểm kém hơn một chút so với baseline chưa được đột biến, và thứ hạng nghĩa là **ít gây hại nhất xếp trước**, không phải cải thiện tốt nhất. Hãy diễn giải bảng theo nghĩa đó cho đến khi các toán tử làm nguội xuất hiện trong một bản phát hành sau.
+
+::: warning Chạy test suite của bạn
+`--run-tests` chạy script `test` của chính dự án bạn một lần cho mỗi biến dị, trên mã nguồn đã bị đột biến. Điều này có nghĩa là chạy mã dự án tùy ý trên dữ liệu đầu vào đã bị sửa đổi. Hãy để tắt trừ khi bạn thực sự định chạy nó, và hãy chuẩn bị cho việc này sẽ chậm.
+:::
+
+## Tài nguyên liên quan
+
+- [Cấu hình](/vi/guide/configuration) - Đặt các tùy chọn trong tệp cấu hình thay vì cờ CLI
+- [Định dạng đầu ra](/vi/guide/output) - Chi tiết về các định dạng XML, Markdown, JSON và văn bản thuần túy
+- [Nén mã](/vi/guide/code-compress) - Cách `--compress` hoạt động với Tree-sitter
+- [Bảo mật](/vi/guide/security) - `--no-security-check` vô hiệu hóa những gì
+
+## Ví dụ
+
+```bash
+# Sử dụng cơ bản
+repomix
+
+# Tệp đầu ra và định dạng tùy chỉnh
+repomix -o my-output.xml --style xml
+
+# Đầu ra sang stdout
+repomix --stdout > custom-output.txt
+
+# Đầu ra sang stdout, sau đó pipe sang lệnh khác (ví dụ, simonw/llm)
+repomix --stdout | llm "Vui lòng giải thích mã này làm gì."
+
+# Đầu ra tùy chỉnh với nén
+repomix --compress
+
+# Xử lý tệp cụ thể với các mẫu
+repomix --include "src/**/*.ts,*.md" --ignore "*.test.js,docs/**"
+
+# Kho lưu trữ từ xa với nhánh
+repomix --remote https://github.com/user/repo/tree/main
+
+# Kho lưu trữ từ xa với commit
+repomix --remote https://github.com/user/repo/commit/836abcd7335137228ad77feb28655d85712680f1
+
+# Kho lưu trữ từ xa với dạng viết tắt
+repomix --remote user/repo
+
+# Kho lưu trữ từ xa với dạng viết tắt (tự động phát hiện, không cần --remote)
+repomix user/repo
+
+# Danh sách tệp sử dụng stdin
+find src -name "*.ts" -type f | repomix --stdin
+git ls-files "*.js" | repomix --stdin
+echo -e "src/index.ts\nsrc/utils.ts" | repomix --stdin
+
+# Tích hợp Git
+repomix --include-diffs  # Bao gồm diff git cho các thay đổi chưa commit
+repomix --include-logs   # Bao gồm nhật ký git (50 commit cuối cùng theo mặc định)
+repomix --include-logs --include-logs-count 10  # Bao gồm 10 commit cuối cùng
+repomix --include-diffs --include-logs  # Bao gồm cả diff và logs
+
+# Phân tích số lượng token
+repomix --token-count-tree
+repomix --token-count-tree 1000  # Chỉ hiển thị tệp/thư mục với 1000+ token
+
+# Chế độ theo dõi: tự động đóng gói lại khi tệp thay đổi
+repomix --watch
+repomix -w --include "src/**/*.ts"
+```

@@ -1,0 +1,222 @@
+---
+title: Opsi Baris Perintah
+description: Referensi lengkap opsi CLI Repomix untuk input, output, pemilihan file, repositori remote, konfigurasi, keamanan, penghitungan token, MCP, dan agent skills.
+---
+
+# Opsi Baris Perintah
+
+## Opsi Dasar
+- `-v, --version`: Menampilkan versi alat
+
+## Opsi Input/Output CLI
+
+| Opsi | Deskripsi |
+|------|-----------|
+| `--verbose` | Mengaktifkan pencatatan debug detail (menampilkan pemrosesan file, jumlah token, dan detail konfigurasi) |
+| `--quiet` | Menekan semua output konsol kecuali error (berguna untuk scripting) |
+| `--stdout` | Menulis output yang dikemas langsung ke stdout alih-alih file (menekan semua pencatatan) |
+| `--stdin` | Membaca jalur file dari stdin, satu per baris (file yang ditentukan langsung diproses) |
+| `--copy` | Menyalin output yang dihasilkan ke clipboard sistem setelah pemrosesan |
+| `--token-count-tree [threshold]` | Menampilkan pohon file dengan jumlah token; ambang batas opsional untuk menampilkan hanya file dengan ≥N token (mis. `--token-count-tree 100`) |
+| `--top-files-len <number>` | Jumlah file terbesar untuk ditampilkan dalam ringkasan (default: `5`) |
+
+## Opsi Output Repomix
+
+| Opsi | Deskripsi |
+|------|-----------|
+| `-o, --output <file>` | Jalur file output (default: `repomix-output.xml`, gunakan `"-"` untuk stdout) |
+| `--style <style>` | Format output: `xml`, `markdown`, `json`, atau `plain` (default: `xml`) |
+| `--output-file-path-style <style>` | Cara jalur file ditampilkan dalam output: `target-relative` atau `cwd-relative` (default: `target-relative`) |
+| `--parsable-style` | Escape karakter khusus untuk memastikan XML/Markdown yang valid (diperlukan saat output berisi kode yang merusak format) |
+| `--compress` | Mengekstrak struktur kode esensial (kelas, fungsi, interface) menggunakan parsing Tree-sitter |
+| `--output-show-line-numbers` | Menambahkan nomor baris di depan setiap baris dalam output |
+| `--no-file-summary` | Menghilangkan bagian ringkasan file dari output |
+| `--no-directory-structure` | Menghilangkan visualisasi pohon direktori dari output |
+| `--no-files` | Menghasilkan hanya metadata tanpa konten file (berguna untuk analisis repositori) |
+| `--remove-comments` | Menghapus semua komentar kode sebelum pengemasan |
+| `--remove-empty-lines` | Menghapus baris kosong dari semua file |
+| `--truncate-base64` | Memotong string data base64 yang panjang untuk mengurangi ukuran output |
+| `--header-text <text>` | Teks kustom untuk disertakan di awal output |
+| `--instruction-file-path <path>` | Jalur ke file berisi instruksi kustom untuk disertakan dalam output |
+| `--split-output <size>` | Membagi output menjadi beberapa file bernomor (mis. `repomix-output.1.xml`); ukuran seperti `500kb`, `2mb`, atau `1.5mb` |
+| `--include-empty-directories` | Menyertakan folder tanpa file dalam struktur direktori |
+| `--include-full-directory-structure` | Menampilkan pohon repositori lengkap di bagian Struktur Direktori, bahkan saat menggunakan pola `--include` |
+| `--no-git-sort-by-changes` | Jangan mengurutkan file berdasarkan frekuensi perubahan git (default: file paling sering diubah dahulu) |
+| `--include-diffs` | Menambahkan bagian git diff yang menampilkan perubahan pohon kerja dan staged |
+| `--include-logs` | Menambahkan riwayat commit git dengan pesan dan file yang diubah |
+| `--include-logs-count <count>` | Jumlah commit terbaru untuk disertakan dengan `--include-logs` (default: `50`) |
+
+## Opsi Seleksi File
+
+| Opsi | Deskripsi |
+|------|-----------|
+| `--include <patterns>` | Hanya menyertakan file yang cocok dengan pola glob ini (dipisahkan koma, mis. `"src/**/*.js,*.md"`) |
+| `-i, --ignore <patterns>` | Pola tambahan untuk dikecualikan (dipisahkan koma, mis. `"*.test.js,docs/**"`) |
+| `--no-gitignore` | Tidak menggunakan aturan `.gitignore` untuk memfilter file |
+| `--no-dot-ignore` | Tidak menggunakan aturan `.ignore` untuk memfilter file |
+| `--no-default-patterns` | Tidak menerapkan pola pengabaian bawaan (`node_modules`, `.git`, direktori build, dll.) |
+
+## Opsi Repositori Remote
+
+| Opsi | Deskripsi |
+|------|-----------|
+| `--remote <url>` | Mengkloning dan mengemas repositori remote (URL GitHub atau format `user/repo`) |
+| `--remote-branch <name>` | Branch, tag, atau commit spesifik yang akan digunakan (default: branch default repositori) |
+| `--remote-trust-config` | Memercayai dan memuat file konfigurasi dari repositori remote. Konfigurasi yang dipercaya dapat menjalankan perintah dan membaca file lokal, jadi gunakan opsi ini hanya untuk repositori yang sepenuhnya Anda percayai (dinonaktifkan secara default untuk keamanan). Pada terminal interaktif, konfigurasi ditampilkan dan konfirmasi diminta |
+
+## Opsi Konfigurasi
+
+| Opsi | Deskripsi |
+|------|-----------|
+| `-c, --config <path>` | Menggunakan file konfigurasi kustom alih-alih `repomix.config.json` |
+| `--init` | Membuat file `repomix.config.json` baru dengan pengaturan default |
+| `--global` | Dengan `--init`, membuat konfigurasi di direktori home alih-alih direktori saat ini |
+
+## Opsi Keamanan
+- `--no-security-check`: Lewati pemindaian data sensitif seperti kunci API dan kata sandi
+
+## Opsi Jumlah Token
+- `--token-count-encoding <encoding>`: Model tokenizer untuk penghitungan: o200k_base (GPT-4o), cl100k_base (GPT-3.5/4), dll. (default: o200k_base)
+- `--token-budget <number>`: Gagal dengan kode keluar bukan nol saat output yang dikemas melebihi N token. Berguna sebagai pengaman dalam pipeline CI dan alur kerja agen untuk menjaga output tetap dalam jendela konteks model target. Output tetap dihasilkan; hanya kode keluar yang menandakan overflow
+
+## Opsi MCP
+- `--mcp`: Jalankan sebagai server Model Context Protocol untuk integrasi alat AI
+- `--sandbox [dir]`: (dengan `--mcp`) Membatasi tools file server MCP ke sebuah direktori workspace (default direktori kerja; mis. `--sandbox path/to/project`). Setiap path bersifat relatif terhadap root tersebut, path absolut/host ditolak, dan pengemasan remote, pembuatan skill, serta pelampiran output eksternal dinonaktifkan. Lihat [Server MCP](/id/guide/mcp-server)
+
+## Opsi Pembuatan Agent Skills
+
+| Opsi | Deskripsi |
+|------|-----------|
+| `--skill-generate [name]` | Menghasilkan output format Claude Agent Skills ke direktori `.claude/skills/<name>/` (nama otomatis dihasilkan jika dihilangkan) |
+| `--skill-project-name <name>` | Mengganti nama proyek yang digunakan dalam deskripsi Skills yang dihasilkan |
+| `--skill-output <path>` | Menentukan jalur direktori output skill secara langsung (melewati prompt lokasi) |
+| `-f, --force` | Melewati semua prompt konfirmasi (penimpaan direktori skill, kepercayaan konfigurasi remote) |
+
+## Opsi Mode Watch
+
+- `-w, --watch`: Memantau perubahan file dan secara otomatis mengemas ulang. File baru, yang diubah, dan yang dihapus akan terdeteksi, perubahan cepat di-debounce (300 ms), dan stempel waktu dicetak setelah setiap pembangunan ulang. Tekan `Ctrl+C` untuk berhenti.
+
+Mode watch hanya bekerja dengan direktori lokal, sehingga tidak dapat dikombinasikan dengan `--remote`, URL repositori remote yang diberikan sebagai argumen posisional, `--stdout`, `--stdin`, `--split-output`, `--skill-generate`, atau `--copy`. Pembatasan ini berlaku baik opsi diatur di baris perintah maupun di file konfigurasi Anda.
+
+## Perintah Termodinamika dan Evolusi
+
+Repomix menyediakan dua perintah analisis yang membaca riwayat Git repositori Anda dan melaporkan di mana kode sedang berada di bawah tekanan. Keduanya bersifat read-only terhadap working tree Anda: `heat` tidak pernah menulis apa pun, dan `evolve` melakukan seluruh pekerjaannya di worktree Git sekali pakai di bawah direktori sementara Anda, sehingga branch, HEAD, dan pekerjaan yang belum di-commit Anda tetap utuh.
+
+### heat
+
+Mengukur "suhu" per-file dari churn commit, jumlah penulis, ukuran file, dan densitas siklomatik, lalu mencantumkan file yang berada pada atau di atas ambang batas sebagai *mendidih*.
+
+```bash
+# Analyse the last 90 days of history
+repomix heat .
+
+# Widen the window and the report size
+repomix heat . --days 365 --limit 50
+
+# Machine-readable output
+repomix heat . --json
+```
+
+| Opsi | Default | Deskripsi |
+| --- | --- | --- |
+| `--days <n>` | `90` | Jumlah hari riwayat Git yang dianalisis |
+| `--max-commits <n>` | `500` | Jumlah commit maksimum yang dianalisis |
+| `--t-max <n>` | `80` | Ambang suhu untuk file yang mendidih |
+| `--limit <n>` | `20` | Jumlah file yang dicantumkan dalam tabel |
+| `--json` | off | Keluarkan laporan mentah alih-alih tabel |
+| `--no-fail` | off | Keluar dengan kode `0` bahkan jika file yang mendidih terdeteksi |
+| `--report` | off | Tulis `thermodynamic-report.json` ke `.manteka-memory/` |
+
+### evolve
+
+Mencabangkan repositori Anda menjadi mutan sekali pakai, memutasi file yang mendidih, dan mengurutkan mutan berdasarkan Indeks Kebugaran Biologis. Setiap mutan dievaluasi di worktree Git detached miliknya sendiri, sehingga repositori Anda tidak pernah dimodifikasi.
+
+```bash
+# Explore five mutants from the current HEAD
+repomix evolve .
+
+# Restrict to one operator and two files
+repomix evolve . --operator dead-guard --target src/legacy.ts
+
+# Include the project's own test suite in the score
+repomix evolve . --run-tests
+```
+
+| Opsi | Default | Deskripsi |
+| --- | --- | --- |
+| `--population <n>` | `5` | Jumlah mutan maksimum yang dievaluasi |
+| `--operator <name>` | ketiga | Batasi ke satu operator; dapat diulang |
+| `--target <path>` | file yang mendidih | Batasi ke file tertentu; dapat diulang |
+| `--concurrency <n>` | `2` | Mutan yang dievaluasi secara paralel |
+| `--run-tests` | off | Sertakan sumbu pengujian dalam indeks kebugaran |
+| `--test-timeout <ms>` | `300000` | Batas waktu test suite per mutan |
+| `--json` | off | Keluarkan laporan mentah alih-alih tabel |
+| `--report` | off | Tulis `evolution-report.json` ke `.manteka-memory/` |
+
+`--target` mempersempit cakupan, bukan melapaskannya: target diiriskan (intersect) dengan himpunan file yang mendidih, sehingga menyebut file yang tidak mendidih tidak menghasilkan mutan untuk file tersebut.
+
+**Semantik pengurutan.** Ketiga operator mutasi menambahkan kode, yang sedikit menaikkan suhu. Karena itu, setiap mutan mendapat skor sedikit lebih buruk daripada baseline yang tidak dimodifikasi, dan pengurutannya berarti **paling tidak berbahaya lebih dulu**, bukan perbaikan terbaik. Tafsirkan tabel demikian sampai operator pendingin tiba di rilis berikutnya.
+
+::: warning Menjalankan test suite Anda
+`--run-tests` menjalankan skrip `test` milik proyek Anda sendiri sekali per mutan, pada sumber yang sudah dimutasi. Itu berarti menjalankan kode proyek sembarang terhadap input yang telah dimodifikasi. Biarkan nonaktif kecuali Anda memang bermaksud menjalankannya, dan bersiaplah karena akan berjalan lambat.
+:::
+
+## Sumber Daya Terkait
+
+- [Konfigurasi](/id/guide/configuration) - Atur opsi di file konfigurasi alih-alih flag CLI
+- [Format Output](/id/guide/output) - Detail tentang format XML, Markdown, JSON, dan plain text
+- [Kompresi Kode](/id/guide/code-compress) - Cara kerja `--compress` dengan Tree-sitter
+- [Keamanan](/id/guide/security) - Apa yang dinonaktifkan oleh `--no-security-check`
+
+## Contoh
+
+```bash
+# Penggunaan dasar
+repomix
+
+# File output dan format kustom
+repomix -o my-output.xml --style xml
+
+# Output ke stdout
+repomix --stdout > custom-output.txt
+
+# Output ke stdout, kemudian pipe ke perintah lain (mis., simonw/llm)
+repomix --stdout | llm "Tolong jelaskan apa yang dilakukan kode ini."
+
+# Output kustom dengan kompresi
+repomix --compress
+
+# Memproses file tertentu dengan pola
+repomix --include "src/**/*.ts,*.md" --ignore "*.test.js,docs/**"
+
+# Repositori remote dengan branch
+repomix --remote https://github.com/user/repo/tree/main
+
+# Repositori remote dengan commit
+repomix --remote https://github.com/user/repo/commit/836abcd7335137228ad77feb28655d85712680f1
+
+# Repositori remote dengan bentuk singkat
+repomix --remote user/repo
+
+# Repositori remote dengan bentuk singkat (terdeteksi otomatis, tanpa --remote)
+repomix user/repo
+
+# Daftar file menggunakan stdin
+find src -name "*.ts" -type f | repomix --stdin
+git ls-files "*.js" | repomix --stdin
+echo -e "src/index.ts\nsrc/utils.ts" | repomix --stdin
+
+# Integrasi Git
+repomix --include-diffs  # Sertakan diff git untuk perubahan yang belum di-commit
+repomix --include-logs   # Sertakan log git (50 commit terakhir secara default)
+repomix --include-logs --include-logs-count 10  # Sertakan 10 commit terakhir
+repomix --include-diffs --include-logs  # Sertakan diff dan log
+
+# Analisis jumlah token
+repomix --token-count-tree
+repomix --token-count-tree 1000  # Hanya tampilkan file/direktori dengan 1000+ token
+
+# Mode watch: kemas ulang otomatis saat file berubah
+repomix --watch
+repomix -w --include "src/**/*.ts"
+```

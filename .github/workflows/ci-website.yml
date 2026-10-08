@@ -1,0 +1,276 @@
+name: CI Website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'website/**'
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.tool-versions'
+      - '.github/workflows/ci-website.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'website/**'
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.tool-versions'
+      - '.github/workflows/ci-website.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-website-client:
+    name: Lint Website Client
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .tool-versions
+          cache: npm
+      - name: Install website client dependencies
+        working-directory: website/client
+        run: npm ci
+      - name: Lint website client
+        working-directory: website/client
+        run: node --run lint
+      - name: Build website client
+        working-directory: website/client
+        run: node --run docs:build
+
+  lint-website-server:
+    name: Lint Website Server
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .tool-versions
+          cache: npm
+      - name: Build and link local repomix
+        id: link-local
+        run: |
+          npm ci
+          node --run build
+          npm link
+          # Derive the package name instead of hardcoding it: the npm package is
+          # renamed by the branding PR, and `npm link <wrong-name>` does not fail
+          # loudly -- npm silently falls back to the npm registry and installs an
+          # unrelated package, so CI would "pass" while testing the wrong code.
+          echo "package_name=$(node -p "require('./package.json').name")" >> "$GITHUB_OUTPUT"
+      - name: Install website server dependencies
+        working-directory: website/server
+        env:
+          PACKAGE_NAME: ${{ steps.link-local.outputs.package_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # npm 12 fails to prepare the github: git dependency: its prep
+          # child process re-reads .npmrc (min-release-age=7) and hits npm's own
+          # --before, which cannot coexist. Setting npm_config_min_release_age=0
+          # does not help (0 still counts as "provided", and the child re-reads
+          # .npmrc), so downgrade to npm 11.4.0, which predates the flag.
+          # Matches website/server/Dockerfile.
+          # `npm ci` must fetch the `repomix` git dependency, and two things
+          # stand in the way on a hosted runner:
+          #   1. npm resolves GitHub git dependencies over SSH whatever the spec
+          #      scheme is, and the runner has no SSH key -> "Permission denied
+          #      (publickey)".
+          #   2. The owner account is not readable anonymously (the profile and
+          #      every repository return 404 without credentials), so HTTPS
+          #      without a token fails too.
+          # GITHUB_TOKEN is injected automatically by GitHub Actions, so this
+          # needs no manual secret: rewrite SSH onto HTTPS and carry the token
+          # as an HTTP extraheader. See docs/GIT_ACCESS.md.
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+          git config --global "http.https://github.com/.extraheader" \
+            "AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          npm install -g npm@11.4.0
+          npm ci
+          npm link "${PACKAGE_NAME}"
+          # `npm link` only creates node_modules/<PACKAGE_NAME>, but the website
+          # source imports the dependency key ("repomix"). Alias that key onto the
+          # local build so CI exercises this branch instead of the fork's default
+          # branch. `ln -sfn` must not be used here: when the destination is a real
+          # directory -- which is what `npm ci` installs for a git dependency -- it
+          # silently nests the link inside it instead of replacing it, turning the
+          # step into a no-op that still "passes".
+          if [ "${PACKAGE_NAME}" != "repomix" ]; then
+            rm -rf node_modules/repomix
+            ln -s "${PACKAGE_NAME}" node_modules/repomix
+          fi
+          # Fail loudly if the alias did not take effect: "repomix" must resolve to
+          # this checkout's build, never to the copy `npm ci` fetched from the fork.
+          resolved=$(node -e "process.stdout.write(require.resolve('repomix'))")
+          expected=$(realpath -m "$GITHUB_WORKSPACE/$(node -p "require('../../package.json').main")")
+          if [ "${resolved}" != "${expected}" ]; then
+            echo "::error::repomix resolves to '${resolved}' instead of the local build '${expected}'"
+            exit 1
+          fi
+          echo "repomix resolves to the local build: ${resolved}"
+      - name: Lint website server
+        working-directory: website/server
+        run: node --run lint
+
+  test-website-server:
+    name: Test Website Server
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .tool-versions
+          cache: npm
+      - name: Build and link local repomix
+        id: link-local
+        run: |
+          npm ci
+          node --run build
+          npm link
+          # Derive the package name instead of hardcoding it: the npm package is
+          # renamed by the branding PR, and `npm link <wrong-name>` does not fail
+          # loudly -- npm silently falls back to the npm registry and installs an
+          # unrelated package, so CI would "pass" while testing the wrong code.
+          echo "package_name=$(node -p "require('./package.json').name")" >> "$GITHUB_OUTPUT"
+      - name: Install website server dependencies
+        working-directory: website/server
+        env:
+          PACKAGE_NAME: ${{ steps.link-local.outputs.package_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # npm 12 fails to prepare the github: git dependency: its prep
+          # child process re-reads .npmrc (min-release-age=7) and hits npm's own
+          # --before, which cannot coexist. Setting npm_config_min_release_age=0
+          # does not help (0 still counts as "provided", and the child re-reads
+          # .npmrc), so downgrade to npm 11.4.0, which predates the flag.
+          # Matches website/server/Dockerfile.
+          # `npm ci` must fetch the `repomix` git dependency, and two things
+          # stand in the way on a hosted runner:
+          #   1. npm resolves GitHub git dependencies over SSH whatever the spec
+          #      scheme is, and the runner has no SSH key -> "Permission denied
+          #      (publickey)".
+          #   2. The owner account is not readable anonymously (the profile and
+          #      every repository return 404 without credentials), so HTTPS
+          #      without a token fails too.
+          # GITHUB_TOKEN is injected automatically by GitHub Actions, so this
+          # needs no manual secret: rewrite SSH onto HTTPS and carry the token
+          # as an HTTP extraheader. See docs/GIT_ACCESS.md.
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+          git config --global "http.https://github.com/.extraheader" \
+            "AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          npm install -g npm@11.4.0
+          npm ci
+          npm link "${PACKAGE_NAME}"
+          # `npm link` only creates node_modules/<PACKAGE_NAME>, but the website
+          # source imports the dependency key ("repomix"). Alias that key onto the
+          # local build so CI exercises this branch instead of the fork's default
+          # branch. `ln -sfn` must not be used here: when the destination is a real
+          # directory -- which is what `npm ci` installs for a git dependency -- it
+          # silently nests the link inside it instead of replacing it, turning the
+          # step into a no-op that still "passes".
+          if [ "${PACKAGE_NAME}" != "repomix" ]; then
+            rm -rf node_modules/repomix
+            ln -s "${PACKAGE_NAME}" node_modules/repomix
+          fi
+          # Fail loudly if the alias did not take effect: "repomix" must resolve to
+          # this checkout's build, never to the copy `npm ci` fetched from the fork.
+          resolved=$(node -e "process.stdout.write(require.resolve('repomix'))")
+          expected=$(realpath -m "$GITHUB_WORKSPACE/$(node -p "require('../../package.json').main")")
+          if [ "${resolved}" != "${expected}" ]; then
+            echo "::error::repomix resolves to '${resolved}' instead of the local build '${expected}'"
+            exit 1
+          fi
+          echo "repomix resolves to the local build: ${resolved}"
+      - name: Test website server
+        working-directory: website/server
+        run: node --run test
+
+  bundle-website-server:
+    name: Bundle Website Server
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .tool-versions
+          cache: npm
+      - name: Build and link local repomix
+        id: link-local
+        run: |
+          npm ci
+          node --run build
+          npm link
+          # Derive the package name instead of hardcoding it: the npm package is
+          # renamed by the branding PR, and `npm link <wrong-name>` does not fail
+          # loudly -- npm silently falls back to the npm registry and installs an
+          # unrelated package, so CI would "pass" while testing the wrong code.
+          echo "package_name=$(node -p "require('./package.json').name")" >> "$GITHUB_OUTPUT"
+      - name: Install website server dependencies
+        working-directory: website/server
+        env:
+          PACKAGE_NAME: ${{ steps.link-local.outputs.package_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # npm 12 fails to prepare the github: git dependency: its prep
+          # child process re-reads .npmrc (min-release-age=7) and hits npm's own
+          # --before, which cannot coexist. Setting npm_config_min_release_age=0
+          # does not help (0 still counts as "provided", and the child re-reads
+          # .npmrc), so downgrade to npm 11.4.0, which predates the flag.
+          # Matches website/server/Dockerfile.
+          # `npm ci` must fetch the `repomix` git dependency, and two things
+          # stand in the way on a hosted runner:
+          #   1. npm resolves GitHub git dependencies over SSH whatever the spec
+          #      scheme is, and the runner has no SSH key -> "Permission denied
+          #      (publickey)".
+          #   2. The owner account is not readable anonymously (the profile and
+          #      every repository return 404 without credentials), so HTTPS
+          #      without a token fails too.
+          # GITHUB_TOKEN is injected automatically by GitHub Actions, so this
+          # needs no manual secret: rewrite SSH onto HTTPS and carry the token
+          # as an HTTP extraheader. See docs/GIT_ACCESS.md.
+          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+          git config --global "http.https://github.com/.extraheader" \
+            "AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          npm install -g npm@11.4.0
+          npm ci
+          npm link "${PACKAGE_NAME}"
+          # `npm link` only creates node_modules/<PACKAGE_NAME>, but the website
+          # source imports the dependency key ("repomix"). Alias that key onto the
+          # local build so CI exercises this branch instead of the fork's default
+          # branch. `ln -sfn` must not be used here: when the destination is a real
+          # directory -- which is what `npm ci` installs for a git dependency -- it
+          # silently nests the link inside it instead of replacing it, turning the
+          # step into a no-op that still "passes".
+          if [ "${PACKAGE_NAME}" != "repomix" ]; then
+            rm -rf node_modules/repomix
+            ln -s "${PACKAGE_NAME}" node_modules/repomix
+          fi
+          # Fail loudly if the alias did not take effect: "repomix" must resolve to
+          # this checkout's build, never to the copy `npm ci` fetched from the fork.
+          resolved=$(node -e "process.stdout.write(require.resolve('repomix'))")
+          expected=$(realpath -m "$GITHUB_WORKSPACE/$(node -p "require('../../package.json').main")")
+          if [ "${resolved}" != "${expected}" ]; then
+            echo "::error::repomix resolves to '${resolved}' instead of the local build '${expected}'"
+            exit 1
+          fi
+          echo "repomix resolves to the local build: ${resolved}"
+      - name: Bundle website server
+        working-directory: website/server
+        run: node --run bundle

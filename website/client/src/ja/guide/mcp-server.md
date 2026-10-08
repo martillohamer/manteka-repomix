@@ -1,0 +1,300 @@
+---
+title: MCPサーバー
+description: RepomixをModel Context Protocolサーバーとして実行し、AIアシスタントがローカルまたはリモートのコードベースを直接パック、検索、読み取りできるようにします。
+---
+
+# MCPサーバー
+
+Repomixは[Model Context Protocol (MCP)](https://modelcontextprotocol.io)をサポートしており、AIアシスタントがコードベースと直接対話できるようになります。MCPサーバーとして実行すると、Repomixはローカルまたはリモートリポジトリを手動でファイル準備することなく、AI分析用にパッケージ化するツールを提供します。
+
+> [!NOTE]  
+> これは実験的な機能であり、ユーザーのフィードバックと実際の使用状況に基づいて積極的に改善を進めていきます
+
+## RepomixをMCPサーバーとして実行する
+
+RepomixをMCPサーバーとして実行するには、`--mcp`フラグを使用します：
+
+```bash
+repomix --mcp
+```
+
+これによりRepomixがMCPサーバーモードで起動し、Model Context ProtocolをサポートするAIアシスタントから利用できるようになります。
+
+## サンドボックスモード
+
+デフォルトでは、MCPサーバーはホストユーザーがアクセス可能な任意のパスを読み取ることができます。これは信頼できるローカルアシスタントにとっては便利ですが、信頼できないクライアントやエージェントにサーバーを公開する場合は範囲が広すぎます。`--sandbox`フラグは、サーバーのファイルツールを単一のワークスペースディレクトリに制限します：
+
+```bash
+# 現在の作業ディレクトリに制限
+repomix --mcp --sandbox
+
+# 特定のディレクトリに制限
+repomix --mcp --sandbox path/to/project
+```
+
+サンドボックスモードが有効な場合：
+
+- **すべてのパスはワークスペースのルートからの相対パスになります。** 絶対パス、`~`、`..`、Windowsのドライブ/UNCパスは拒否され、（シンボリックリンクを経由する場合を含め）ルートの外に解決されるパスは除外されます。結果やエラーメッセージも相対パスになるため、ホスト側のパスが露出することはありません。これは以下のツールリファレンスにある`directory`引数と`path`引数にも適用されます。サンドボックスモードでは、各表が本来説明する絶対パスではなく、ワークスペースのルートからの相対パスを渡してください。
+- **読み取り専用でルートに制限されたツールのみが登録されます：** `pack_codebase`、`read_repomix_output`、`grep_repomix_output`、`file_system_read_file`、`file_system_read_directory`。リモートパッケージ化、スキル生成、外部出力のアタッチは、ネットワークへのアクセス、ファイルの書き込み、任意パスの参照を伴うため無効化されます。この2つの`file_system_*`ツール自体も、サンドボックスモードでのみ登録され、到達範囲はワークスペースのルートによって制限されます。
+
+これはツールサーフェスに対するアプリケーションレベルの制限（多層防御）であり、OSレベルのサンドボックスではありません。信頼できないクライアント向けにサーバーをホストする場合でも、コンテナや専用ユーザーなど、プラットフォーム標準の分離手段の下で実行してください。
+
+`--sandbox`はMCPサーバーにのみ影響し、`--mcp`なしでは効果がありません。
+
+## MCPサーバーの設定
+
+RepomixをMCPサーバーとしてClaudeなどのAIアシスタントで使用するには、MCP設定を構成する必要があります：
+
+### VS Code向け
+
+VS CodeにRepomix MCPサーバーをインストールするには、以下のいずれかの方法を使用します：
+
+1. **インストールバッジを使用：**
+
+  [![Install in VS Code](https://img.shields.io/badge/VS_Code-VS_Code?style=flat-square&label=Install%20Server&color=0098FF)](vscode:mcp/install?%7B%22name%22%3A%22repomix%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22repomix%22%2C%22--mcp%22%5D%7D)<br>
+  [![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-VS_Code_Insiders?style=flat-square&label=Install%20Server&color=24bfa5)](vscode-insiders:mcp/install?%7B%22name%22%3A%22repomix%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22repomix%22%2C%22--mcp%22%5D%7D)
+
+2. **コマンドラインを使用：**
+
+  ```bash
+  code --add-mcp '{"name":"repomix","command":"npx","args":["-y","repomix","--mcp"]}'
+  ```
+
+  VS Code Insiders の場合：
+  ```bash
+  code-insiders --add-mcp '{"name":"repomix","command":"npx","args":["-y","repomix","--mcp"]}'
+  ```
+
+### Cline（VS Code拡張機能）の場合
+
+`cline_mcp_settings.json`ファイルを編集します：
+
+```json
+{
+  "mcpServers": {
+    "repomix": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "repomix",
+        "--mcp"
+      ]
+    }
+  }
+}
+```
+
+### Cursorの場合
+
+Cursorでは、`Cursor Settings` > `MCP` > `+ Add new global MCP server`からClineと同様の設定を追加します。
+
+### Claude Desktopの場合
+
+`claude_desktop_config.json`ファイルをClineの設定と同様に編集します。
+
+### Claude Codeの場合
+
+[Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview)でRepomixをMCPサーバーとして設定するには、以下のコマンドを使用します：
+
+```bash
+claude mcp add repomix -- npx -y repomix --mcp
+```
+
+または、より便利な体験のために**公式Repomixプラグイン**を使用することもできます。プラグインは自然言語コマンドと簡単なセットアップを提供します。詳細は[Claude Codeプラグイン](/ja/guide/claude-code-plugins)のドキュメントをご覧ください。
+
+### npxの代わりにDockerを使用
+
+Dockerを使用してRepomixをMCPサーバーとして実行できます：
+
+```json
+{
+  "mcpServers": {
+    "repomix-docker": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "ghcr.io/yamadashy/repomix",
+        "--mcp"
+      ]
+    }
+  }
+}
+```
+
+## 利用可能なMCPツール
+
+MCPサーバーとして実行すると、Repomixは以下のツールを提供します：
+
+### pack_codebase
+
+このツールはローカルのコードディレクトリをAI分析用のXMLファイルにパッケージ化します。コードベース構造を分析し、関連するコード内容を抽出し、メトリクス、ファイルツリー、フォーマットされたコード内容を含む包括的なレポートを生成します。
+
+**パラメータ：**
+
+| パラメータ | 必須 | デフォルト | 説明 |
+|-----------|------|----------|------|
+| `directory` | はい | — | パッケージ化するディレクトリの絶対パス |
+| `compress` | いいえ | `false` | 実装の詳細を削除しながら、重要なコードシグネチャと構造を抽出するTree-sitter圧縮を有効化。セマンティックな意味を保持しながらトークン使用量を約70%削減。`grep_repomix_output`が段階的なコンテンツ取得を可能にするため、通常は不要。 |
+| `includePatterns` | いいえ | — | fast-globパターンを使用して含めるファイル。カンマ区切り（例：`"**/*.{js,ts}"`、`"src/**,docs/**"`） |
+| `ignorePatterns` | いいえ | — | fast-globパターンを使用して除外する追加ファイル。カンマ区切り（例：`"test/**,*.spec.js"`）。`.gitignore`と組み込み除外を補完。 |
+| `outputPatterns` | いいえ | — | 設定ファイルの[`output.patterns`](./configuration.md)オプションに相当する、ファイルごとの含有レベル。`{ "pattern": string, "compress"?: boolean, "directoryStructureOnly"?: boolean }`形式のエントリの配列。最初に一致したパターンが優先され、`directoryStructureOnly`は`compress`より優先。どちらのフラグも指定しない一致はフルコンテンツを強制（グローバルな`compress`から特定ファイルを除外する際に有用）。対象リポジトリの`repomix.config.json`内の`output.patterns`を上書き。 |
+| `topFilesLength` | いいえ | `10` | メトリクス要約に表示する最大ファイル数（サイズ順） |
+| `style` | いいえ | `xml` | 出力フォーマットスタイル：`xml`、`markdown`、`json`、または`plain` |
+
+**例：**
+```json
+{
+  "directory": "/path/to/your/project",
+  "compress": true,
+  "includePatterns": "src/**/*.ts,**/*.md",
+  "ignorePatterns": "**/*.log,tmp/",
+  "outputPatterns": [
+    { "pattern": "src/core/**" },
+    { "pattern": "docs/**/*", "directoryStructureOnly": true }
+  ],
+  "topFilesLength": 10
+}
+```
+
+上記の例では（`compress: true`が、いずれのパターンにも一致しないファイルに対するキャッチオールとして機能します）、`src/core/`配下のファイルはフルコンテンツのまま保持され、`docs/`配下のファイルはディレクトリ構造のみが表示され、それ以外は圧縮されます。
+
+### pack_remote_repository
+
+このツールはGitHubリポジトリを取得、クローン、パッケージ化してAI分析用のXMLファイルを作成します。リモートリポジトリを自動的にクローンし、その構造を分析し、包括的なレポートを生成します。
+
+**パラメータ：**
+
+| パラメータ | 必須 | デフォルト | 説明 |
+|-----------|------|----------|------|
+| `remote` | はい | — | GitHubリポジトリURLまたは`user/repo`形式（例：`"yamadashy/repomix"`、`"https://github.com/user/repo"`、または`"https://github.com/user/repo/tree/branch"`） |
+| `compress` | いいえ | `false` | 実装の詳細を削除しながら、重要なコードシグネチャと構造を抽出するTree-sitter圧縮を有効化。セマンティックな意味を保持しながらトークン使用量を約70%削減。`grep_repomix_output`が段階的なコンテンツ取得を可能にするため、通常は不要。 |
+| `includePatterns` | いいえ | — | fast-globパターンを使用して含めるファイル。カンマ区切り（例：`"**/*.{js,ts}"`、`"src/**,docs/**"`） |
+| `ignorePatterns` | いいえ | — | fast-globパターンを使用して除外する追加ファイル。カンマ区切り（例：`"test/**,*.spec.js"`）。`.gitignore`と組み込み除外を補完。 |
+| `outputPatterns` | いいえ | — | 設定ファイルの[`output.patterns`](./configuration.md)オプションに相当する、ファイルごとの含有レベル。`{ "pattern": string, "compress"?: boolean, "directoryStructureOnly"?: boolean }`形式のエントリの配列。最初に一致したパターンが優先され、`directoryStructureOnly`は`compress`より優先。どちらのフラグも指定しない一致はフルコンテンツを強制（グローバルな`compress`から特定ファイルを除外する際に有用）。 |
+| `topFilesLength` | いいえ | `10` | メトリクス要約に表示する最大ファイル数（サイズ順） |
+| `style` | いいえ | `xml` | 出力フォーマットスタイル：`xml`、`markdown`、`json`、または`plain` |
+
+**例：**
+```json
+{
+  "remote": "yamadashy/repomix",
+  "compress": true,
+  "includePatterns": "src/**/*.ts,**/*.md",
+  "ignorePatterns": "**/*.log,tmp/",
+  "outputPatterns": [
+    { "pattern": "src/core/**" },
+    { "pattern": "docs/**/*", "directoryStructureOnly": true }
+  ],
+  "topFilesLength": 10
+}
+```
+
+### read_repomix_output
+
+このツールはRepomixで生成された出力ファイルの内容を読み込みます。大きなファイルに対する行範囲指定による部分読み込みをサポートします。このツールは直接ファイルシステムアクセスが制限された環境向けに設計されています。
+
+**パラメータ：**
+
+| パラメータ | 必須 | デフォルト | 説明 |
+|-----------|------|----------|------|
+| `outputId` | はい | — | 読み込むRepomix出力ファイルのID |
+| `startLine` | いいえ | ファイルの先頭 | 開始行番号（1ベース、包含） |
+| `endLine` | いいえ | ファイルの末尾 | 終了行番号（1ベース、包含） |
+
+**機能：**
+- ウェブベース環境やサンドボックスアプリケーション向けに特別に設計
+- IDを使用して以前に生成された出力の内容を取得
+- ファイルシステムアクセスを必要とせずにパッケージ化されたコードベースへのアクセスを提供
+- 大きなファイルの部分読み込みをサポート
+
+**例：**
+```json
+{
+  "outputId": "8f7d3b1e2a9c6054",
+  "startLine": 100,
+  "endLine": 200
+}
+```
+
+### grep_repomix_output
+
+このツールはJavaScript RegExp構文を使用したgrep風の機能でRepomix出力ファイル内のパターンを検索します。マッチした行の前後にオプションのコンテキスト行を含めて返します。
+
+**パラメータ：**
+
+| パラメータ | 必須 | デフォルト | 説明 |
+|-----------|------|----------|------|
+| `outputId` | はい | — | 検索するRepomix出力ファイルのID |
+| `pattern` | はい | — | 検索パターン（JavaScript RegExp構文） |
+| `contextLines` | いいえ | `0` | 各マッチの前後に表示するコンテキスト行数。`beforeLines`/`afterLines`が指定された場合はそちらが優先。 |
+| `beforeLines` | いいえ | — | 各マッチの前に表示する行数（`grep -B`のように）。`contextLines`より優先。 |
+| `afterLines` | いいえ | — | 各マッチの後に表示する行数（`grep -A`のように）。`contextLines`より優先。 |
+| `ignoreCase` | いいえ | `false` | 大文字小文字を区別しないマッチングを実行 |
+
+**機能：**
+- 強力なパターンマッチングのためのJavaScript RegExp構文を使用
+- マッチの理解を深めるためのコンテキスト行をサポート
+- before/afterコンテキスト行の個別制御が可能
+- 大文字小文字を区別する/しない検索オプション
+
+**例：**
+```json
+{
+  "outputId": "8f7d3b1e2a9c6054",
+  "pattern": "function\\s+\\w+\\(",
+  "contextLines": 3,
+  "ignoreCase": false
+}
+```
+
+### file_system_read_file と file_system_read_directory
+
+この2つのファイルシステムツールは、[サンドボックスモード](#サンドボックスモード)（`--sandbox`）でのみ利用可能で、到達範囲はワークスペースのルートによって制限されます。`--sandbox`なしでは登録されません。
+
+1. `file_system_read_file`
+  - ワークスペースのルートからの相対パス（例：`src/index.ts`）でファイルの内容を読み取り
+  - 既知のシークレット形式（[Secretlint](https://github.com/secretlint/secretlint)）に一致する内容を、追加のヒューリスティックな安全策として拒否する。アクセス境界はスキャンではなくワークスペースのルート
+  - 無効なパスに対して、ホスト側のパスを露出させることなく明確なエラーメッセージを返す
+
+2. `file_system_read_directory`
+  - ワークスペースのルートからの相対パス（例：`.`や`src`）でディレクトリの内容を一覧表示
+  - ファイルとディレクトリを明確な指標（`[FILE]`または`[DIR]`）で表示
+  - プロジェクト構造の探索とコードベース組織の理解に有用
+
+**例：**
+```typescript
+// ファイルの読み取り
+const fileContent = await tools.file_system_read_file({
+  path: 'src/index.ts'
+});
+
+// ディレクトリの内容一覧
+const dirContent = await tools.file_system_read_directory({
+  path: 'src'
+});
+```
+
+これらのツールは、AIアシスタントが以下のような操作を必要とする場合に特に有用です：
+- ワークスペース内の特定のファイルを分析
+- ディレクトリ構造をナビゲート
+- ファイルの存在とアクセス可能性を確認
+
+## RepomixをMCPサーバーとして使用する利点
+
+RepomixをMCPサーバーとして使用すると、いくつかの利点があります：
+
+1. **直接統合**: AIアシスタントが手動でファイルを準備することなく、コードベースを直接分析できます。
+2. **効率的なワークフロー**: ファイルを手動で生成してアップロードする必要がなくなり、コード分析のプロセスが効率化されます。
+3. **一貫した出力**: AIアシスタントが一貫性のある最適化された形式でコードベースを受け取ることができます。
+4. **高度な機能**: コード圧縮、トークンカウント、セキュリティチェックなど、Repomixのすべての機能を活用できます。
+
+設定が完了すると、AIアシスタントはRepomixの機能を直接使用してコードベースを分析できるようになり、コード分析ワークフローがより効率的になります。
+
+## 関連リソース
+
+- [Claude Codeプラグイン](/ja/guide/claude-code-plugins) - Claude Code向けの便利なプラグイン連携
+- [設定](/ja/guide/configuration) - Repomixの動作をカスタマイズ
+- [コマンドラインオプション](/ja/guide/command-line-options) - CLIリファレンス
+- [出力フォーマット](/ja/guide/output) - 利用可能な出力形式について

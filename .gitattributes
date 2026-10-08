@@ -1,0 +1,27 @@
+# 1. Normalización global: todo texto se almacena con LF en el índice
+* text=auto eol=lf
+
+# 2. Binarios: nunca se convierte su contenido
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.mp4 binary
+*.webp binary
+*.wasm binary
+
+# 3. Ficheros generados (no se revisan en diffs)
+package-lock.json linguist-generated=true
+.github/releases/** linguist-generated=true
+
+# 4. Ficheros que deben ser CRLF en el working tree de Windows (defensivo)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf

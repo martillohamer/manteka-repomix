@@ -1,0 +1,300 @@
+---
+title: Server MCP
+description: Jalankan Repomix sebagai server Model Context Protocol agar AI assistant dapat mengemas, mencari, dan membaca codebase lokal atau remote secara langsung.
+---
+
+# Server MCP
+
+Repomix mendukung [Model Context Protocol (MCP)](https://modelcontextprotocol.io), memungkinkan asisten AI untuk berinteraksi langsung dengan codebase Anda. Ketika dijalankan sebagai server MCP, Repomix menyediakan tools yang memungkinkan asisten AI untuk mengemas repository lokal atau remote untuk analisis tanpa memerlukan persiapan file manual.
+
+> [!NOTE]  
+> Ini adalah fitur eksperimental yang akan kami tingkatkan secara aktif berdasarkan feedback pengguna dan penggunaan dunia nyata
+
+## Menjalankan Repomix sebagai Server MCP
+
+Untuk menjalankan Repomix sebagai server MCP, gunakan flag `--mcp`:
+
+```bash
+repomix --mcp
+```
+
+Ini memulai Repomix dalam mode server MCP, membuatnya tersedia untuk asisten AI yang mendukung Model Context Protocol.
+
+## Mode Sandbox
+
+Secara default, server MCP dapat membaca path apa pun yang dapat diakses oleh pengguna host. Hal ini nyaman untuk asisten lokal yang tepercaya, tetapi terlalu luas ketika server diekspos ke klien atau agent yang tidak tepercaya. Flag `--sandbox` membatasi tools file server ke satu direktori workspace:
+
+```bash
+# Batasi ke direktori kerja saat ini
+repomix --mcp --sandbox
+
+# Batasi ke direktori tertentu
+repomix --mcp --sandbox path/to/project
+```
+
+Ketika mode sandbox aktif:
+
+- **Setiap path bersifat relatif terhadap root workspace.** Path absolut, `~`, `..`, dan path drive/UNC Windows ditolak, dan path yang mengarah ke luar root (termasuk melalui symlink) akan dijatuhkan. Hasil dan pesan error juga bersifat relatif, sehingga path host tidak terekspos. Ini berlaku untuk argumen `directory` dan `path` pada referensi tools di bawah: dalam mode sandbox, berikan keduanya secara relatif terhadap root workspace, bukan sebagai path absolut seperti yang biasanya dijelaskan pada tabel-tabel tersebut.
+- **Hanya tools read-only yang dibatasi ke root yang didaftarkan:** `pack_codebase`, `read_repomix_output`, `grep_repomix_output`, `file_system_read_file`, dan `file_system_read_directory`. Pengemasan remote, pembuatan skill, dan pelampiran output eksternal dinonaktifkan, karena tools tersebut mengakses jaringan, menulis file, atau merujuk ke path sembarang. Kedua tools `file_system_*` itu sendiri hanya tersedia dalam mode sandbox, di mana root workspace membatasi apa yang dapat mereka jangkau.
+
+Ini adalah pembatasan permukaan tools di level aplikasi (defense in depth), bukan sandbox di level OS. Saat meng-host server untuk klien yang tidak tepercaya, tetap jalankan di bawah isolasi standar platform Anda (container, pengguna khusus).
+
+`--sandbox` hanya memengaruhi server MCP; tidak berpengaruh tanpa `--mcp`.
+
+## Konfigurasi Server MCP
+
+Untuk menggunakan Repomix sebagai server MCP dengan asisten AI seperti Claude, Anda perlu mengkonfigurasi pengaturan MCP:
+
+### Untuk VS Code
+
+Anda dapat menginstal server MCP Repomix di VS Code menggunakan salah satu metode berikut:
+
+1. **Menggunakan badge instalasi:**
+
+  [![Install in VS Code](https://img.shields.io/badge/VS_Code-VS_Code?style=flat-square&label=Install%20Server&color=0098FF)](vscode:mcp/install?%7B%22name%22%3A%22repomix%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22repomix%22%2C%22--mcp%22%5D%7D)<br>
+  [![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-VS_Code_Insiders?style=flat-square&label=Install%20Server&color=24bfa5)](vscode-insiders:mcp/install?%7B%22name%22%3A%22repomix%22%2C%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22repomix%22%2C%22--mcp%22%5D%7D)
+
+2. **Menggunakan command line:**
+
+  ```bash
+  code --add-mcp '{"name":"repomix","command":"npx","args":["-y","repomix","--mcp"]}'
+  ```
+
+  Untuk VS Code Insiders:
+  ```bash
+  code-insiders --add-mcp '{"name":"repomix","command":"npx","args":["-y","repomix","--mcp"]}'
+  ```
+
+### Untuk Cline (ekstensi VS Code)
+
+Edit file `cline_mcp_settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "repomix": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "repomix",
+        "--mcp"
+      ]
+    }
+  }
+}
+```
+
+### Untuk Cursor
+
+Di Cursor, tambahkan server MCP baru dari `Cursor Settings` > `MCP` > `+ Add new global MCP server` dengan konfigurasi serupa dengan Cline.
+
+### Untuk Claude Desktop
+
+Edit file `claude_desktop_config.json` dengan konfigurasi serupa dengan Cline.
+
+### Untuk Claude Code
+
+Untuk mengkonfigurasi Repomix sebagai server MCP di [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview), gunakan perintah berikut:
+
+```bash
+claude mcp add repomix -- npx -y repomix --mcp
+```
+
+Sebagai alternatif, Anda dapat menggunakan **plugin Repomix resmi** untuk pengalaman yang lebih nyaman. Plugin menyediakan perintah bahasa alami dan pengaturan yang lebih mudah. Lihat dokumentasi [Plugin Claude Code](/id/guide/claude-code-plugins) untuk detail.
+
+### Menggunakan Docker sebagai pengganti npx
+
+Sebagai pengganti menggunakan npx, Anda dapat menggunakan Docker untuk menjalankan Repomix sebagai server MCP:
+
+```json
+{
+  "mcpServers": {
+    "repomix-docker": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "ghcr.io/yamadashy/repomix",
+        "--mcp"
+      ]
+    }
+  }
+}
+```
+
+## Tools MCP yang Tersedia
+
+Ketika dijalankan sebagai server MCP, Repomix menyediakan tools berikut:
+
+### pack_codebase
+
+Tool ini mengemas direktori kode lokal ke dalam file XML untuk analisis AI. Tool ini menganalisis struktur codebase, mengekstrak konten kode yang relevan, dan menghasilkan laporan komprehensif termasuk metrik, pohon file, dan konten kode yang diformat.
+
+**Parameter:**
+
+| Parameter | Wajib | Default | Deskripsi |
+|-----------|-------|---------|-----------|
+| `directory` | Ya | — | Path absolut ke direktori yang akan dikemas |
+| `compress` | Tidak | `false` | Mengaktifkan kompresi Tree-sitter untuk mengekstrak signature kode esensial dan struktur sambil menghapus detail implementasi. Mengurangi penggunaan token sekitar 70% sambil mempertahankan makna semantik. Umumnya tidak diperlukan karena `grep_repomix_output` memungkinkan pengambilan konten incremental. |
+| `includePatterns` | Tidak | — | File yang akan disertakan menggunakan pola fast-glob. Dipisahkan koma (mis. `"**/*.{js,ts}"`, `"src/**,docs/**"`) |
+| `ignorePatterns` | Tidak | — | File tambahan yang akan dikecualikan menggunakan pola fast-glob. Dipisahkan koma (mis. `"test/**,*.spec.js"`). Melengkapi `.gitignore` dan eksklusi built-in. |
+| `outputPatterns` | Tidak | — | Level inklusi per-file, mencerminkan opsi config-file [`output.patterns`](./configuration.md). Sebuah array entri `{ "pattern": string, "compress"?: boolean, "directoryStructureOnly"?: boolean }`. Pola yang cocok pertama menang; `directoryStructureOnly` diprioritaskan di atas `compress`, dan kecocokan tanpa flag apa pun memaksa konten penuh (berguna untuk mengecualikan file dari `compress` global). Menggantikan `output.patterns` apa pun dari `repomix.config.json` repository target. |
+| `topFilesLength` | Tidak | `10` | Jumlah file terbesar berdasarkan ukuran untuk ditampilkan dalam ringkasan metrik |
+| `style` | Tidak | `xml` | Gaya format output: `xml`, `markdown`, `json`, atau `plain` |
+
+**Contoh:**
+```json
+{
+  "directory": "/path/to/your/project",
+  "compress": true,
+  "includePatterns": "src/**/*.ts,**/*.md",
+  "ignorePatterns": "**/*.log,tmp/",
+  "outputPatterns": [
+    { "pattern": "src/core/**" },
+    { "pattern": "docs/**/*", "directoryStructureOnly": true }
+  ],
+  "topFilesLength": 10
+}
+```
+
+Dengan contoh di atas (di mana `compress: true` bertindak sebagai catch-all untuk file yang tidak cocok), file di bawah `src/core/` dipertahankan dengan konten penuh, file di bawah `docs/` hanya dicantumkan dalam struktur direktori, dan sisanya dikompresi.
+
+### pack_remote_repository
+
+Tool ini mengambil, mengkloning, dan mengemas repository GitHub ke dalam file XML untuk analisis AI. Tool ini secara otomatis mengkloning repository remote, menganalisis strukturnya, dan menghasilkan laporan komprehensif.
+
+**Parameter:**
+
+| Parameter | Wajib | Default | Deskripsi |
+|-----------|-------|---------|-----------|
+| `remote` | Ya | — | URL repository GitHub atau format `user/repo` (mis. `"yamadashy/repomix"`, `"https://github.com/user/repo"`, atau `"https://github.com/user/repo/tree/branch"`) |
+| `compress` | Tidak | `false` | Mengaktifkan kompresi Tree-sitter untuk mengekstrak signature kode esensial dan struktur sambil menghapus detail implementasi. Mengurangi penggunaan token sekitar 70% sambil mempertahankan makna semantik. Umumnya tidak diperlukan karena `grep_repomix_output` memungkinkan pengambilan konten incremental. |
+| `includePatterns` | Tidak | — | File yang akan disertakan menggunakan pola fast-glob. Dipisahkan koma (mis. `"**/*.{js,ts}"`, `"src/**,docs/**"`) |
+| `ignorePatterns` | Tidak | — | File tambahan yang akan dikecualikan menggunakan pola fast-glob. Dipisahkan koma (mis. `"test/**,*.spec.js"`). Melengkapi `.gitignore` dan eksklusi built-in. |
+| `outputPatterns` | Tidak | — | Level inklusi per-file, mencerminkan opsi config-file [`output.patterns`](./configuration.md). Sebuah array entri `{ "pattern": string, "compress"?: boolean, "directoryStructureOnly"?: boolean }`. Pola yang cocok pertama menang; `directoryStructureOnly` diprioritaskan di atas `compress`, dan kecocokan tanpa flag apa pun memaksa konten penuh (berguna untuk mengecualikan file dari `compress` global). |
+| `topFilesLength` | Tidak | `10` | Jumlah file terbesar berdasarkan ukuran untuk ditampilkan dalam ringkasan metrik |
+| `style` | Tidak | `xml` | Gaya format output: `xml`, `markdown`, `json`, atau `plain` |
+
+**Contoh:**
+```json
+{
+  "remote": "yamadashy/repomix",
+  "compress": true,
+  "includePatterns": "src/**/*.ts,**/*.md",
+  "ignorePatterns": "**/*.log,tmp/",
+  "outputPatterns": [
+    { "pattern": "src/core/**" },
+    { "pattern": "docs/**/*", "directoryStructureOnly": true }
+  ],
+  "topFilesLength": 10
+}
+```
+
+### read_repomix_output
+
+Tool ini membaca konten file output yang dihasilkan oleh Repomix. Mendukung pembacaan parsial dengan spesifikasi rentang baris untuk file besar. Tool ini dirancang untuk lingkungan di mana akses filesystem langsung terbatas.
+
+**Parameter:**
+
+| Parameter | Wajib | Default | Deskripsi |
+|-----------|-------|---------|-----------|
+| `outputId` | Ya | — | ID file output Repomix untuk dibaca |
+| `startLine` | Tidak | Awal file | Nomor baris awal (berbasis 1, inklusif) |
+| `endLine` | Tidak | Akhir file | Nomor baris akhir (berbasis 1, inklusif) |
+
+**Fitur:**
+- Dirancang khusus untuk lingkungan berbasis web atau aplikasi sandbox
+- Mengambil konten output yang dihasilkan sebelumnya menggunakan ID mereka
+- Menyediakan akses ke codebase yang dikemas tanpa memerlukan akses filesystem
+- Mendukung pembacaan parsial untuk file besar
+
+**Contoh:**
+```json
+{
+  "outputId": "8f7d3b1e2a9c6054",
+  "startLine": 100,
+  "endLine": 200
+}
+```
+
+### grep_repomix_output
+
+Tool ini mencari pola dalam file output Repomix menggunakan fungsionalitas mirip grep dengan sintaks JavaScript RegExp. Mengembalikan baris yang cocok dengan baris konteks opsional di sekitar kecocokan.
+
+**Parameter:**
+
+| Parameter | Wajib | Default | Deskripsi |
+|-----------|-------|---------|-----------|
+| `outputId` | Ya | — | ID file output Repomix untuk dicari |
+| `pattern` | Ya | — | Pola pencarian (sintaks JavaScript RegExp) |
+| `contextLines` | Tidak | `0` | Jumlah baris konteks sebelum dan sesudah setiap kecocokan. Diganti oleh `beforeLines`/`afterLines` jika ditentukan. |
+| `beforeLines` | Tidak | — | Baris untuk ditampilkan sebelum setiap kecocokan (seperti `grep -B`). Mengambil prioritas atas `contextLines`. |
+| `afterLines` | Tidak | — | Baris untuk ditampilkan setelah setiap kecocokan (seperti `grep -A`). Mengambil prioritas atas `contextLines`. |
+| `ignoreCase` | Tidak | `false` | Melakukan pencocokan case-insensitive |
+
+**Fitur:**
+- Menggunakan sintaks JavaScript RegExp untuk pencocokan pola yang kuat
+- Mendukung baris konteks untuk pemahaman kecocokan yang lebih baik
+- Memungkinkan kontrol terpisah dari baris konteks sebelum/sesudah
+- Opsi pencarian case-sensitive dan case-insensitive
+
+**Contoh:**
+```json
+{
+  "outputId": "8f7d3b1e2a9c6054",
+  "pattern": "function\\s+\\w+\\(",
+  "contextLines": 3,
+  "ignoreCase": false
+}
+```
+
+### file_system_read_file dan file_system_read_directory
+
+Kedua tools filesystem ini hanya tersedia dalam [mode sandbox](#mode-sandbox) (`--sandbox`), di mana root workspace membatasi apa yang dapat mereka jangkau. Tanpa `--sandbox`, tools ini tidak didaftarkan.
+
+1. `file_system_read_file`
+  - Membaca konten file pada path yang relatif terhadap root workspace (misalnya `src/index.ts`)
+  - Menolak konten yang cocok dengan format secret yang dikenal ([Secretlint](https://github.com/secretlint/secretlint)) sebagai pengaman heuristik tambahan; batas akses adalah root workspace, bukan pemindaian tersebut
+  - Mengembalikan pesan error yang jelas untuk path yang tidak valid, tanpa mengekspos path host
+
+2. `file_system_read_directory`
+  - Mendaftar konten direktori pada path yang relatif terhadap root workspace (misalnya `.` atau `src`)
+  - Menampilkan file dan direktori dengan indikator yang jelas (`[FILE]` atau `[DIR]`)
+  - Berguna untuk mengeksplorasi struktur proyek dan memahami organisasi codebase
+
+**Contoh:**
+```typescript
+// Membaca file
+const fileContent = await tools.file_system_read_file({
+  path: 'src/index.ts'
+});
+
+// Mendaftar konten direktori
+const dirContent = await tools.file_system_read_directory({
+  path: 'src'
+});
+```
+
+Tools ini sangat berguna ketika asisten AI perlu:
+- Menganalisis file spesifik dalam workspace
+- Menavigasi struktur direktori
+- Memverifikasi eksistensi dan aksesibilitas file
+
+## Manfaat Menggunakan Repomix sebagai Server MCP
+
+Menggunakan Repomix sebagai server MCP menawarkan beberapa keuntungan:
+
+1. **Integrasi Langsung**: Asisten AI dapat menganalisis codebase Anda secara langsung tanpa persiapan file manual.
+2. **Workflow Efisien**: Merampingkan proses analisis kode dengan menghilangkan kebutuhan untuk menghasilkan dan mengunggah file secara manual.
+3. **Output Konsisten**: Memastikan asisten AI menerima codebase dalam format yang konsisten dan dioptimalkan.
+4. **Fitur Lanjutan**: Memanfaatkan semua fitur Repomix seperti kompresi kode, penghitungan token, dan pemeriksaan keamanan.
+
+Setelah dikonfigurasi, asisten AI Anda dapat langsung menggunakan kemampuan Repomix untuk menganalisis codebase, membuat workflow analisis kode lebih efisien.
+
+## Sumber Daya Terkait
+
+- [Plugin Claude Code](/id/guide/claude-code-plugins) - Integrasi plugin yang nyaman untuk Claude Code
+- [Konfigurasi](/id/guide/configuration) - Kustomisasi perilaku Repomix
+- [Opsi Baris Perintah](/id/guide/command-line-options) - Referensi CLI lengkap
+- [Format Output](/id/guide/output) - Pelajari tentang format output yang tersedia
