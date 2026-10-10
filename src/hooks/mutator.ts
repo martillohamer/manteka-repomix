@@ -51,7 +51,7 @@ export const mutateCode = (
 
       // Buscar y reemplazar operador
       const escapedOp = originalOp.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const opPattern = new RegExp(`\\b${escapedOp}\\b`, 'g');
+      const opPattern = new RegExp(escapedOp, 'g');
       const matches = code.match(opPattern);
 
       if (matches && matches.length > 0) {
