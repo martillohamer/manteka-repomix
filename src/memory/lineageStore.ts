@@ -141,6 +141,15 @@ export class LineageStore {
   }
 
   /**
+   * Obtiene estadísticas del store de linaje.
+   * @returns Objeto con el total de registros almacenados y metadatos de vectores
+   */
+  public getStats(): { totalRecords: number; totalVectors?: number; dimension?: number } {
+    const records = this.getAllRecords();
+    return { totalRecords: records.length, totalVectors: records.length, dimension: 384 };
+  }
+
+  /**
    * Elimina todos los registros (útil para testing).
    */
   public clear(): void {
