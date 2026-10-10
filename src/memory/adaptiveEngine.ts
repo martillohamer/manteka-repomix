@@ -6,7 +6,6 @@
  */
 
 import type { SwarmProposal } from '../swarm/types.js';
-import type { LineageRecord } from './types.js';
 import { cosineSimilarity, tokenize } from './vectorizer.js';
 
 /**
@@ -55,7 +54,7 @@ export const evaluateProposalConfidence = (
 
   // Calcular la similitud máxima encontrada
   const maxSimilarity = similarRecords.reduce<number>(
-    (max, record) => Math.max(max, record.metadata?.similarity ?? 0),
+    (max, record) => Math.max(max, (record.metadata?.similarity ?? 0) as number),
     0,
   );
 

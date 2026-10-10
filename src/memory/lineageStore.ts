@@ -5,7 +5,7 @@
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { LineageRecord } from './types.js';
+import type { LineageRecord, MemoryDeps } from './types.js';
 import { cosineSimilarity, tokenize } from './vectorizer.js';
 
 const DEFAULT_STORE_NAME = 'lineage';
@@ -18,10 +18,8 @@ const storePath = (deps: MemoryDeps): string => {
 
 export class LineageStore {
   private storePath: string;
-  private deps: MemoryDeps;
 
   constructor(deps: MemoryDeps) {
-    this.deps = deps;
     this.storePath = storePath(deps);
 
     // Asegurar que el directorio exista
@@ -47,7 +45,7 @@ export class LineageStore {
       metadata: record.metadata,
     };
 
-    const content = JSON.stringify(validRecord) + '\n';
+    const content = `${JSON.stringify(validRecord)}\n`;
     fs.appendFileSync(this.storePath, content, DEFAULT_ENCODING);
   }
 
@@ -88,8 +86,8 @@ export class LineageStore {
 
     // Ordenar por similitud descendente
     records.sort((a, b) => {
-      const simA = a.metadata?.similarity ?? 0;
-      const simB = b.metadata?.similarity ?? 0;
+      const simA = (a.metadata?.similarity ?? 0) as number;
+      const simB = (b.metadata?.similarity ?? 0) as number;
       return simB - simA;
     });
 

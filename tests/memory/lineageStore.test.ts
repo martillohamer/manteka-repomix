@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { createLineageStore, type LineageRecord } from '../../src/memory/lineageStore.js';
 import { tokenize } from '../../src/memory/vectorizer.js';
 
-const testStoreDir = `${__dirname}/../../tmp/memory-test`;
+const testStoreDir = `${__dirname}/../../tmp/memory-lineage-${Date.now()}`;
 
 beforeEach(() => {
   // Cleanup test directory before each test
