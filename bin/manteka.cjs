@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-
 // https://nodejs.org/api/module.html#module-compile-cache
 // Enable compile cache for the main process and propagate the cache directory
 // via NODE_COMPILE_CACHE env var so child_process workers inherit it at startup
@@ -40,18 +39,15 @@ function setupErrorHandlers() {
     console.error('Unhandled Promise Rejection:', reason);
     process.exit(EXIT_CODES.ERROR);
   });
-  // No SIGINT/SIGTERM handlers here on purpose: `manteka watch` installs its
-  // own graceful shutdown (close the watcher, finish the in-flight cycle),
-  // and every other command is short-lived enough to die by default signal
-  // semantics. A handler in this file would preempt the watcher's cleanup.
 }
 
-(async () => {
+// Wait for ESM module loading to stabilize
+setTimeout(async () => {
   try {
     setupErrorHandlers();
 
-    const { runManteka } = await import('../lib/cli/index.js');
-    await runManteka();
+    const { main } = await import('../src/cli/index.js', { assert: { type: 'module' } });
+    await main();
   } catch (error) {
     if (error instanceof Error) {
       console.error('Fatal Error:', {
@@ -65,4 +61,4 @@ function setupErrorHandlers() {
 
     process.exit(EXIT_CODES.ERROR);
   }
-})();
+}, 100);

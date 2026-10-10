@@ -94,6 +94,9 @@ export const createMcpServer = async (config: McpServerConfig = defaultMcpServer
     registerAttachPackedOutputTool(mcpServer);
   }
 
+  // Register Manteka native tools (always available, stdio-transported)
+  registerMantekaTools(mcpServer);
+
   return mcpServer;
 };
 
