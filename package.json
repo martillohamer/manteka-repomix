@@ -2,7 +2,7 @@
   "name": "manteka-repomix",
   "version": "1.18.1-manteka.1",
   "description": "Manteka Repomix - Pack your repository into a single AI-friendly file",
-  "mcpName": "io.github.DAW1BSergiomg26/manteka-repomix",
+  "mcpName": "io.github.martillohamer/manteka-repomix",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "exports": {

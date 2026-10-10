@@ -367,7 +367,7 @@ npm run lint
 
 ## 📞 Contacto y Soporte
 
-- **Repositorio:** https://github.com/DAW1BSergiomg26/manteka-repomix
+- **Repositorio:** https://github.com/martillohamer/manteka-repomix
 - **Issue Tracker:** GitHub Issues
 - **Documentation:** `HANDOFF.md` (este archivo)
 - **Version:** 1.18.1-manteka.1
