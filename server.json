@@ -1,11 +1,11 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.DAW1BSergiomg26/manteka-repomix",
+  "name": "io.github.martillohamer/manteka-repomix",
   "title": "Manteka Repomix",
   "description": "Pack local or remote codebases into AI-friendly files that LLMs and coding agents can read or search",
   "websiteUrl": "https://repomix.com",
   "repository": {
-    "url": "https://github.com/DAW1BSergiomg26/manteka-repomix",
+    "url": "https://github.com/martillohamer/manteka-repomix",
     "source": "github",
     "id": "1398626613"
   },

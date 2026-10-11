@@ -11,12 +11,17 @@ import * as readline from 'node:readline';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Command } from 'commander';
 
 // Import Manteka modules (native imports, no external runtime deps)
 import { createAndStartMcpServer } from '../mcp/server.js';
 import { registerMantekaTools } from '../mcp/tools.js';
 import { getVersion } from '../core/file/packageJsonParse.js';
 import { handleError } from '../shared/errorHandle.js';
+import { registerDashboardCommand } from './commands/dashboardCommand.js';
+import { registerEvolveCommand } from './commands/evolveCommand.js';
+import { registerStatusCommand } from './commands/statusCommand.js';
+import { registerWatchCommand } from './commands/watchCommand.js';
 
 // ===========================
 // MCP Server Management
@@ -210,6 +215,10 @@ const main = async (): Promise<void> => {
     case 'version':
       await runVersion();
       break;
+    case 'dashboard':
+      // TODO: Implement dashboard command start
+      console.log('manteka dashboard command is available but requires further implementation');
+      break;
     default:
       console.error(`Unknown command: "${command}"`);
       console.error('');
@@ -231,6 +240,7 @@ const showHelp = (): void => {
   console.log('  serve    Start MCP Stdio server transport');
   console.log('  doctor   Health check of all subsystems (Healer, Swarm, Memory, Hooks)');
   console.log('  version  Show version information');
+  console.log('  dashboard  Serve the biometric web dashboard');
   console.log('');
   console.log('Examples:');
   console.log('  manteka serve');
@@ -314,6 +324,39 @@ const startInteractiveMode = (): void => {
 
 // Export for testing
 export { main, startMcpserver, runDoctor, runVersion, showHelp, startInteractiveMode };
+
+// Create a CLI program for testing - registers all commands including dashboard
+export const createMantekaProgram = (): import('commander').Command => {
+  const { Command } = require('commander');
+  const program = new Command('manteka');
+
+  program
+    .command('serve')
+    .description('Start MCP Stdio server transport');
+
+  program
+    .command('doctor')
+    .description('Health check of all subsystems');
+
+  program
+    .command('version')
+    .description('Show version information');
+
+  program
+    .command('dashboard')
+    .description('Serve the biometric web dashboard');
+
+  // Register evolve command
+  registerEvolveCommand(program);
+
+  // Register status command
+  registerStatusCommand(program);
+
+  // Register watch command
+  registerWatchCommand(program);
+
+  return program;
+};
 
 // Run main if executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {

@@ -12,6 +12,7 @@ const { MockMcpServer, MockStdioServerTransport } = vi.hoisted(() => {
     prompt: vi.fn().mockReturnThis(),
     registerTool: vi.fn().mockReturnThis(),
     registerPrompt: vi.fn().mockReturnThis(),
+    registerToolHandler: vi.fn().mockReturnThis(),
     connect: vi.fn().mockResolvedValue(undefined),
     close: vi.fn().mockResolvedValue(undefined),
     // Add other required props
@@ -124,6 +125,7 @@ describe('MCP Server', () => {
         prompt: vi.fn().mockReturnThis(),
         registerTool: vi.fn().mockReturnThis(),
         registerPrompt: vi.fn().mockReturnThis(),
+        registerToolHandler: vi.fn().mockReturnThis(),
         connect: vi.fn().mockResolvedValue(undefined),
         close: vi.fn().mockResolvedValue(undefined),
         server: {},

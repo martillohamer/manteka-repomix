@@ -52,7 +52,11 @@ describe('SwarmOrchestrator', () => {
     if (fs.existsSync(testFileDir)) {
       const files = fs.readdirSync(testFileDir);
       for (const file of files) {
-        fs.unlinkSync(`${testFileDir}/${file}`);
+        try {
+          fs.unlinkSync(`${testFileDir}/${file}`);
+        } catch {
+          // Ignore cleanup errors (e.g. EPERM on Windows)
+        }
       }
     }
   });

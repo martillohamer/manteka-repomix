@@ -16,6 +16,7 @@ import { registerMantekaStoreNoteTool } from './tools/mantekaStoreNoteTool.js';
 import { registerPackCodebaseTool } from './tools/packCodebaseTool.js';
 import { registerPackRemoteRepositoryTool } from './tools/packRemoteRepositoryTool.js';
 import { registerReadRepomixOutputTool } from './tools/readRepomixOutputTool.js';
+import { registerMantekaTools } from './tools.js';
 
 /**
  * Instructions for the Repomix MCP Server that describe its capabilities and usage

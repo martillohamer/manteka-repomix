@@ -39,6 +39,9 @@ describe('manteka command parsing', () => {
       'status',
       'watch',
       'dashboard',
+      'serve',
+      'doctor',
+      'version',
     ]);
   });
 
