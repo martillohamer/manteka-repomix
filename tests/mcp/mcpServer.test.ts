@@ -263,6 +263,7 @@ describe('MCP Server', () => {
         prompt: vi.fn().mockReturnThis(),
         registerTool: vi.fn().mockReturnThis(),
         registerPrompt: vi.fn().mockReturnThis(),
+        registerToolHandler: vi.fn().mockReturnThis(),
         connect: vi.fn().mockRejectedValue(error),
         close: vi.fn().mockResolvedValue(undefined),
       };
@@ -322,6 +323,7 @@ describe('MCP Server', () => {
         prompt: vi.fn().mockReturnThis(),
         registerTool: vi.fn().mockReturnThis(),
         registerPrompt: vi.fn().mockReturnThis(),
+        registerToolHandler: vi.fn().mockReturnThis(),
         connect: vi.fn().mockResolvedValue(undefined),
         close: vi.fn().mockRejectedValue(error),
       };
