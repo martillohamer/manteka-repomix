@@ -1,0 +1,612 @@
+npm notice run manteka-repomix@1.18.1-manteka.1 npx
+npm notice run vitest run
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.1 [39m[90mC:/Users/astur/Desktop/manteka-repomix[39m
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_file rejects "/etc/passwd"
+Error in file_system_read_file tool: PathScopeError: Path "/etc/passwd" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_file rejects "/"
+Error in file_system_read_file tool: PathScopeError: Path "/" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_file rejects ".."
+Error in file_system_read_file tool: PathScopeError: Path ".." must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_file rejects "../x"
+Error in file_system_read_file tool: PathScopeError: Path "../x" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_file rejects "../../etc/passwd"
+Error in file_system_read_file tool: PathScopeError: Path "../../etc/passwd" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_file rejects "a/../../b"
+Error in file_system_read_file tool: PathScopeError: Path "a/../../b" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_file rejects "src/../../etc/passwd"
+Error in file_system_read_file tool: PathScopeError: Path "src/../../etc/passwd" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_file rejects "a/b/../../../c"
+Error in file_system_read_file tool: PathScopeError: Path "a/b/../../../c" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+ [32mÔ£ô[39m tests/core/file/dotIgnoreSpec.test.ts [2m([22m[2m7 tests[22m[2m)[22m[33m 427[2mms[22m[39m
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_file rejects "..\\x"
+Error in file_system_read_file tool: PathScopeError: Path "..\x" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_file rejects "a\\..\\b"
+Error in file_system_read_file tool: PathScopeError: Path "a\..\b" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_file rejects "~"
+Error in file_system_read_file tool: PathScopeError: Path "~" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_file rejects "~/"
+Error in file_system_read_file tool: PathScopeError: Path "~/" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_file rejects "~/.ssh/id_rsa"
+Error in file_system_read_file tool: PathScopeError: Path "~/.ssh/id_rsa" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_directory rejects "/etc/passwd"
+Error in file_system_read_directory tool: PathScopeError: Path "/etc/passwd" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_directory rejects "/"
+Error in file_system_read_directory tool: PathScopeError: Path "/" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_directory rejects ".."
+Error in file_system_read_directory tool: PathScopeError: Path ".." must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_directory rejects "../x"
+Error in file_system_read_directory tool: PathScopeError: Path "../x" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_directory rejects "../../etc/passwd"
+Error in file_system_read_directory tool: PathScopeError: Path "../../etc/passwd" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_directory rejects "a/../../b"
+Error in file_system_read_directory tool: PathScopeError: Path "a/../../b" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_directory rejects "src/../../etc/passwd"
+Error in file_system_read_directory tool: PathScopeError: Path "src/../../etc/passwd" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_directory rejects "a/b/../../../c"
+Error in file_system_read_directory tool: PathScopeError: Path "a/b/../../../c" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_directory rejects "..\\x"
+Error in file_system_read_directory tool: PathScopeError: Path "..\x" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_directory rejects "a\\..\\b"
+Error in file_system_read_directory tool: PathScopeError: Path "a\..\b" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_directory rejects "~"
+Error in file_system_read_directory tool: PathScopeError: Path "~" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_directory rejects "~/"
+Error in file_system_read_directory tool: PathScopeError: Path "~/" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_directory rejects "~/.ssh/id_rsa"
+Error in file_system_read_directory tool: PathScopeError: Path "~/.ssh/id_rsa" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_file rejects "C:\\Windows\\System32" on Windows (relative filename on POSIX)
+Error in file_system_read_file tool: PathScopeError: Path "C:\Windows\System32" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_file rejects "C:/Windows" on Windows (relative filename on POSIX)
+Error in file_system_read_file tool: PathScopeError: Path "C:/Windows" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_file rejects "\\\\server\\share\\x" on Windows (relative filename on POSIX)
+Error in file_system_read_file tool: PathScopeError: Path "\\server\share\x" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > read_file rejects "\\x" on Windows (relative filename on POSIX)
+Error in file_system_read_file tool: PathScopeError: Path "\x" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/sandbox.contract.test.ts > sandbox contract > confinement: file/dir path input rejects every escape variant > a rejection echoes the agentÔÇÖs OWN input back (not blanked), so it sees what it sent
+Error in file_system_read_file tool: PathScopeError: Path "/etc/passwd" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+ [32mÔ£ô[39m tests/core/metrics/calculateGitDiffMetrics.test.ts [2m([22m[2m13 tests[22m[2m)[22m[33m 691[2mms[22m[39m
+   [32mÔ£ô[39m calculateGitDiffMetrics [2m(13)[22m
+     [32mÔ£ô[39m when processing git diffs [2m(4)[22m
+       [33m[2mÔ£ô[22m[39m should handle large diff content correctly[33m 675[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/file/fileSearch.gitignoreBackslash.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 1048[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/packager/inclusionLevelSpec.test.ts [2m([22m[2m3 tests[22m[2m)[22m[33m 343[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/metrics/tokenCountCache.test.ts [2m([22m[2m23 tests[22m[2m)[22m[33m 1443[2mms[22m[39m
+   [32mÔ£ô[39m tokenCountCache [2m(23)[22m
+     [32mÔ£ô[39m FIFO eviction [2m(1)[22m
+       [33m[2mÔ£ô[22m[39m drops the oldest entries once the cap is exceeded on save[33m 712[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/metrics/TokenCounter.test.ts [2m([22m[2m15 tests[22m[2m)[22m[33m 536[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/actions/watchAction.test.ts [2m([22m[2m27 tests[22m[2m)[22m[33m 721[2mms[22m[39m
+   [32mÔ£ô[39m watchAction [2m(20)[22m
+     [33m[2mÔ£ô[22m[39m should run initial pack on start[33m 393[2mms[22m[39m
+ [32mÔ£ô[39m tests/mcp/tools/sandbox.contract.test.ts [2m([22m[2m86 tests[22m[2m)[22m[33m 1437[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/file/fileProcessorRun.test.ts [2m([22m[2m29 tests[22m[2m | [22m[33m4 skipped[39m[2m)[22m[33m 501[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/packager/multiRootSpec.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 1259[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/file/fileSearch.gitignoreSpec.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 623[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/metrics/calculateFileMetrics.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 490[2mms[22m[39m
+   [32mÔ£ô[39m calculateFileMetrics [2m(5)[22m
+     [33m[2mÔ£ô[22m[39m should calculate metrics for target files[33m 440[2mms[22m[39m
+ [32mÔ£ô[39m tests/shared/urlRedact.test.ts [2m([22m[2m28 tests[22m[2m)[22m[33m 428[2mms[22m[39m
+   [32mÔ£ô[39m urlRedact [2m(28)[22m
+     [32mÔ£ô[39m redactUrl [2m(22)[22m
+       [33m[2mÔ£ô[22m[39m should scale linearly on adversarial input: many @ in one token[33m 412[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/security/securityScanSpec.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 273[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/metrics/calculateOutputMetrics.test.ts [2m([22m[2m8 tests[22m[2m)[22m[33m 318[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/metrics/calculateGitLogMetrics.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 302[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/file/emptyDirectorySpec.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 421[2mms[22m[39m
+[90mstdout[2m | tests/core/smartSlice/e2e.test.ts[2m > [22m[2mSmart-Slice end to end[2m > [22m[2mfails when every closure path is filtered out by ignore rules
+[22m[39m[33mSmart-Slice dependency skipped by ignore rules: does-not-exist.ts[39m
+
+ [32mÔ£ô[39m tests/core/smartSlice/e2e.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 385[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/parseFile.comments.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 268[2mms[22m[39m
+ [32mÔ£ô[39m tests/biomimicry/mutationSandbox.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 3194[2mms[22m[39m
+   [32mÔ£ô[39m createMutationSandbox (real git) [2m(3)[22m
+     [33m[2mÔ£ô[22m[39m materialises HEAD in an isolated checkout and removes it cleanly[33m 1020[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m links the main checkout dependencies into the worktree and unlinks them on removal[33m 995[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m creates no branch ref in the source repository[33m 1165[2mms[22m[39m
+ [32mÔ£ô[39m tests/dashboard/dashboard.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 459[2mms[22m[39m
+ [32mÔ£ô[39m tests/biomimicry/semanticGuardian.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 218[2mms[22m[39m
+ [32mÔ£ô[39m tests/shared/unifiedWorker.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 102[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/file/fileRead.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 227[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/parseFile.swift.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 170[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/output/outputGenerate.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 242[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/output/outputStyles/plainStyle.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 233[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/actions/remoteAction.test.ts [2m([22m[2m29 tests[22m[2m)[22m[33m 315[2mms[22m[39m
+ [32mÔ£ô[39m tests/shared/asyncMap.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 152[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/output/outputStyles/xmlStyle.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 191[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/git/gitHubArchive.test.ts [2m([22m[2m10 tests[22m[2m)[22m[33m 4138[2mms[22m[39m
+   [32mÔ£ô[39m gitHubArchive [2m(10)[22m
+     [32mÔ£ô[39m downloadGitHubArchive [2m(8)[22m
+       [33m[2mÔ£ô[22m[39m should retry on network failure[33m 3021[2mms[22m[39m
+       [33m[2mÔ£ô[22m[39m should throw error after all retries fail[33m 1020[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/parseFile.ruby.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 161[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/actions/watch/watchIgnore.test.ts [2m([22m[2m7 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[32m 276[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/cli.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 238[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/packager.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 206[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/parseFile.cpp.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 195[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/parseFile.csharp.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 143[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/parseFile.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 94[2mms[22m[39m
+ [32mÔ£ô[39m tests/thermodynamics/heatRun.test.ts [2m([22m[2m25 tests[22m[2m)[22m[32m 158[2mms[22m[39m
+stderr | tests/mcp/tools/mantekaSemanticDebugTool.test.ts > manteka_semantic_debug > sandbox isolation > reports a path-free error when the memory directory is not a directory
+Error in manteka_semantic_debug tool: Error: ENOTDIR: not a directory, scandir 'C:\Users\astur\AppData\Local\Temp\manteka-semantic-IELQoH\.manteka-memory'
+
+ [32mÔ£ô[39m tests/mcp/tools/mantekaSemanticDebugTool.test.ts [2m([22m[2m11 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[32m 126[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/parseFile.php.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 100[2mms[22m[39m
+ [32mÔ£ô[39m tests/biomimicry/lineage.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 69[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/file/binaryDetectionSpec.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 78[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/cliRun.test.ts [2m([22m[2m39 tests[22m[2m)[22m[32m 102[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/actions/defaultAction.tokenCountTree.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/actions/defaultAction.test.ts [2m([22m[2m35 tests[22m[2m)[22m[32m 58[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/skill/packSkill.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 118[2mms[22m[39m
+ [32mÔ£ô[39m tests/thermodynamics/report.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 68[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/output/outputSplit.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 72[2mms[22m[39m
+ [32mÔ£ô[39m tests/healer/healer.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 109[2mms[22m[39m
+ [32mÔ£ô[39m tests/biomimicry/evolutionEngine.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 119[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/parseFile.typescript.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 156[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/parseFile.javascript.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 128[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/parseFile.c.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 84[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/skill/skillSectionGenerators.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 44[2mms[22m[39m
+stderr | tests/core/file/fileSearch.test.ts > fileSearch > filterFiles > globby error handling > wraps generic Error from globby with directory context
+Error filtering files: disk read failed
+
+stderr | tests/core/file/fileSearch.test.ts > fileSearch > filterFiles > globby error handling > throws a generic message for non-Error throws
+An unexpected error occurred: { unexpected: 'shape' }
+
+ [32mÔ£ô[39m tests/core/file/fileSearch.test.ts [2m([22m[2m54 tests[22m[2m | [22m[33m5 skipped[39m[2m)[22m[32m 61[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/parseFile.rust.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 69[2mms[22m[39m
+ [32mÔ£ô[39m tests/mcp/tools/packCodebaseTool.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 37[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/parseFile.dart.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 98[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/packager/splitOutput.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 123[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/metrics/calculateMetrics.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 49[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/parseFile.go.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 66[2mms[22m[39m
+stderr | tests/mcp/tools/fileSystemReadFileTool.test.ts > FileSystemReadFileTool > should handle general errors during file reading
+Error in file_system_read_file tool: Error: Disk I/O error
+
+stderr | tests/mcp/tools/fileSystemReadFileTool.test.ts > FileSystemReadFileTool > should handle non-Error objects in catch block
+Error in file_system_read_file tool: string error
+
+ [32mÔ£ô[39m tests/mcp/tools/fileSystemReadFileTool.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32mÔ£ô[39m tests/mcp/tools/mcpToolRuntime.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 54[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/parseFile.python.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 73[2mms[22m[39m
+ [32mÔ£ô[39m tests/config/configLoad.integration.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 73[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/output/outputStyles/markdownStyle.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 65[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/git/gitHubArchiveApi.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 56[2mms[22m[39m
+ [32mÔ£ô[39m tests/healer/engine.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 51[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/parseFile.java.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 73[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/parseFile.solidity.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 51[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/output/inclusionLevelOutput.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 64[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/parseFile.css.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 47[2mms[22m[39m
+ [32mÔ£ô[39m tests/shared/logger.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 109[2mms[22m[39m
+ [32mÔ£ô[39m tests/e2e/phase10-pipeline.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 49[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/security/securityCheck.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 56[2mms[22m[39m
+stderr | tests/mcp/tools/fileSystemReadDirectoryTool.sandbox.test.ts > FileSystemReadDirectoryTool (sandboxed) > rejects a prefixed path
+Error in file_system_read_directory tool: PathScopeError: Path "/etc" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+ [32mÔ£ô[39m tests/mcp/tools/fileSystemReadDirectoryTool.sandbox.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 25[2mms[22m[39m
+ [32mÔ£ô[39m tests/memory/lineageStore.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+ [32mÔ£ô[39m tests/mcp/tools/generateSkillTool.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 46[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/smartSlice/smartSlice.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Commands[2m > [22m[2mmanteka version[2m > [22m[2mrunVersion does not throw
+[22m[39mManteka Version: 1.18.1-manteka.1
+Package: manteka-repomix
+CLI: manteka v1.18.1-manteka.1
+
+Subcommands:
+  serve    - Start MCP Stdio server transport
+  doctor   - Health check of all subsystems
+  version  - Show version information
+
+For MCP integration:
+  Send JSON-RPC 2.0 messages via stdin
+  Read responses via stdout
+  Use tools: manteka_heal, manteka_swarm_query, manteka_memory_search, manteka_quality_gate
+
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Commands[2m > [22m[2mmanteka version[2m > [22m[2mrunVersion prints version to stdout
+[22m[39mManteka Version: 1.18.1-manteka.1
+Package: manteka-repomix
+CLI: manteka v1.18.1-manteka.1
+
+Subcommands:
+  serve    - Start MCP Stdio server transport
+  doctor   - Health check of all subsystems
+  version  - Show version information
+
+For MCP integration:
+  Send JSON-RPC 2.0 messages via stdin
+  Read responses via stdout
+  Use tools: manteka_heal, manteka_swarm_query, manteka_memory_search, manteka_quality_gate
+
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Commands[2m > [22m[2mmanteka doctor[2m > [22m[2mruns doctor command without crashing
+[22m[39m=== Manteka Subsystem Health Check ===
+
+--- Healer Subsystem ---
+
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Commands[2m > [22m[2mmanteka doctor[2m > [22m[2mruns doctor command without crashing
+[22m[39m  Status: Ô£à Operational
+  Max attempts: 3 (default)
+  Dry-run mode: enabled
+
+--- Swarm Subsystem ---
+
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Commands[2m > [22m[2mmanteka doctor[2m > [22m[2mruns doctor command without crashing
+[22m[39m  Status: Ô£à Operational
+  Agent roles available
+
+--- Memory Subsystem ---
+
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Commands[2m > [22m[2mmanteka doctor[2m > [22m[2mruns doctor command without crashing
+[22m[39m  Status: Ô£à Operational
+  Entry count: 58
+  Dimensions: 384
+
+--- Hooks / Biological Mutator Subsystem ---
+
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Commands[2m > [22m[2mmanteka doctor[2m > [22m[2mruns doctor command without crashing
+[22m[39m  Status: Ô£à Operational
+  Mutations applicable: true
+  Mutations reversible: true
+  Quality gate verdict: passed
+
+--- MCP Server Subsystem ---
+  Status: ÔÅ©´©Å  Not started
+  Run "manteka serve" to start the MCP server
+
+=== All Subsystem Checks Complete ===
+
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Commands[2m > [22m[2mmanteka doctor[2m > [22m[2mdoctor outputs subsystem information
+[22m[39m=== Manteka Subsystem Health Check ===
+
+--- Healer Subsystem ---
+
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Commands[2m > [22m[2mmanteka doctor[2m > [22m[2mdoctor outputs subsystem information
+[22m[39m  Status: Ô£à Operational
+  Max attempts: 3 (default)
+  Dry-run mode: enabled
+
+--- Swarm Subsystem ---
+
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Commands[2m > [22m[2mmanteka doctor
+[22m[39m  Status: Ô£à Operational
+  Agent roles available
+
+--- Memory Subsystem ---
+
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Commands[2m > [22m[2mmanteka serve[2m > [22m[2mstarts MCP server
+[22m[39m  Status: Ô£à Operational
+  Entry count: 58
+  Dimensions: 384
+
+--- Hooks / Biological Mutator Subsystem ---
+
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Commands[2m > [22m[2mmanteka serve[2m > [22m[2mstarts MCP server
+[22m[39m  Status: Ô£à Operational
+  Mutations applicable: true
+  Mutations reversible: true
+  Quality gate verdict: passed
+
+--- MCP Server Subsystem ---
+  Status: ÔÅ©´©Å  Not started
+  Run "manteka serve" to start the MCP server
+
+=== All Subsystem Checks Complete ===
+
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Commands[2m > [22m[2mmanteka serve[2m > [22m[2mstarts MCP server
+[22m[39mMCP Server started on stdio transport
+Available tools: manteka_heal, manteka_swarm_query, manteka_memory_search, manteka_quality_gate
+Send JSON-RPC 2.0 messages via stdin, read responses via stdout
+Use "manteka doctor" for subsystem health check
+Use "manteka version" for version information
+
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Commands[2m > [22m[2mmain help[2m > [22m[2mshowHelp does not throw
+[22m[39mManteka - Autonomous Code Evolution CLI
+========================================
+
+Usage: manteka <command>
+
+Commands:
+  serve    Start MCP Stdio server transport
+  doctor   Health check of all subsystems (Healer, Swarm, Memory, Hooks)
+  version  Show version information
+  dashboard  Serve the biometric web dashboard
+
+Examples:
+  manteka serve
+  manteka doctor
+  manteka version
+
+MCP Integration:
+  Send JSON-RPC 2.0 messages via stdin
+  Read responses via stdout
+  Available tools: manteka_heal, manteka_swarm_query, manteka_memory_search, manteka_quality_gate
+
+> [90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Commands[2m > [22m[2mmain unknown command[2m > [22m[2mmain handles unknown command
+[22m[39mManteka - Autonomous Code Evolution CLI
+========================================
+
+Usage: manteka <command>
+
+Commands:
+  serve    Start MCP Stdio server transport
+  doctor   Health check of all subsystems (Healer, Swarm, Memory, Hooks)
+  version  Show version information
+  dashboard  Serve the biometric web dashboard
+
+Examples:
+  manteka serve
+  manteka doctor
+  manteka version
+
+MCP Integration:
+  Send JSON-RPC 2.0 messages via stdin
+  Read responses via stdout
+  Available tools: manteka_heal, manteka_swarm_query, manteka_memory_search, manteka_quality_gate
+Manteka Interactive Mode
+Type "help" for commands, "exit" to quit
+
+
+> [90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Commands[2m > [22m[2minteractive mode[2m > [22m[2mstartInteractiveMode does not throw
+[22m[39mManteka Interactive Mode
+Type "help" for commands, "exit" to quit
+
+
+> [90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Integration[2m > [22m[2mmain exits successfully
+[22m[39mManteka - Autonomous Code Evolution CLI
+========================================
+
+Usage: manteka <command>
+
+Commands:
+  serve    Start MCP Stdio server transport
+  doctor   Health check of all subsystems (Healer, Swarm, Memory, Hooks)
+  version  Show version information
+  dashboard  Serve the biometric web dashboard
+
+Examples:
+  manteka serve
+  manteka doctor
+  manteka version
+
+MCP Integration:
+  Send JSON-RPC 2.0 messages via stdin
+  Read responses via stdout
+  Available tools: manteka_heal, manteka_swarm_query, manteka_memory_search, manteka_quality_gate
+Manteka Interactive Mode
+Type "help" for commands, "exit" to quit
+
+
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Integration[2m > [22m[2mmain with serve command
+[22m[39mMCP Server started on stdio transport
+Available tools: manteka_heal, manteka_swarm_query, manteka_memory_search, manteka_quality_gate
+Send JSON-RPC 2.0 messages via stdin, read responses via stdout
+Use "manteka doctor" for subsystem health check
+Use "manteka version" for version information
+
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Integration[2m > [22m[2mmain with doctor command
+[22m[39m=== Manteka Subsystem Health Check ===
+
+--- Healer Subsystem ---
+
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Integration[2m > [22m[2mmain with doctor command
+[22m[39m  Status: Ô£à Operational
+  Max attempts: 3 (default)
+  Dry-run mode: enabled
+
+--- Swarm Subsystem ---
+
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Integration[2m > [22m[2mmain with doctor command
+[22m[39m  Status: Ô£à Operational
+  Agent roles available
+
+--- Memory Subsystem ---
+
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Integration[2m > [22m[2mmain with doctor command
+[22m[39m  Status: Ô£à Operational
+  Entry count: 58
+  Dimensions: 384
+
+--- Hooks / Biological Mutator Subsystem ---
+
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Integration[2m > [22m[2mmain with doctor command
+[22m[39m  Status: Ô£à Operational
+  Mutations applicable: true
+  Mutations reversible: true
+  Quality gate verdict: passed
+
+--- MCP Server Subsystem ---
+  Status: Ô£à Running
+  Server name: manteka-repomix-mcp
+  Server version: await getVersion()
+  Tools registered: 4 (manteka_heal, manteka_swarm_query, manteka_memory_search, manteka_quality_gate)
+
+=== All Subsystem Checks Complete ===
+
+[90mstdout[2m | tests/cli/index.test.ts[2m > [22m[2mPhase 14: CLI Integration[2m > [22m[2mmain with version command
+[22m[39mManteka Version: 1.18.1-manteka.1
+Package: manteka-repomix
+CLI: manteka v1.18.1-manteka.1
+
+Subcommands:
+  serve    - Start MCP Stdio server transport
+  doctor   - Health check of all subsystems
+  version  - Show version information
+
+For MCP integration:
+  Send JSON-RPC 2.0 messages via stdin
+  Read responses via stdout
+  Use tools: manteka_heal, manteka_swarm_query, manteka_memory_search, manteka_quality_gate
+
+ [32mÔ£ô[39m tests/cli/index.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 42[2mms[22m[39m
+stderr | tests/mcp/tools/fileSystemReadFileTool.sandbox.test.ts > FileSystemReadFileTool (sandboxed) > rejects a prefixed/escaping path
+Error in file_system_read_file tool: PathScopeError: Path "../../etc/passwd" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+stderr | tests/mcp/tools/fileSystemReadFileTool.sandbox.test.ts > FileSystemReadFileTool (sandboxed) > rejects a leading-slash path
+Error in file_system_read_file tool: PathScopeError: Path "/etc/passwd" must be relative to workspace root ÔÇö no "/", "~/", "../", drive, or ".." segment. Use e.g. "src/index.ts" or "." for whole workspace.
+
+ [32mÔ£ô[39m tests/mcp/tools/fileSystemReadFileTool.sandbox.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 68[2mms[22m[39m
+ [32mÔ£ô[39m tests/mcp/mcpServer.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 72[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/git/gitCommand.test.ts [2m([22m[2m34 tests[22m[2m | [22m[33m3 skipped[39m[2m)[22m[32m 55[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/parseFile.vue.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 46[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/cliReport.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/prompts/remoteConfigTrustPrompt.test.ts [2m([22m[2m32 tests[22m[2m)[22m[32m 51[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/skill/skillTechStack.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+ [32mÔ£ô[39m tests/config/configLoad.test.ts [2m([22m[2m38 tests[22m[2m)[22m[32m 39[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/skill/skillStyle.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 39[2mms[22m[39m
+ [32mÔ£ô[39m tests/mcp/tools/outputToolsSandbox.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/git/gitDiffHandle.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/reporters/tokenCountTreeReporter.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/skill/skillStatistics.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 31[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/commands/evolveCommand.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/output/outputSort.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+ [32mÔ£ô[39m tests/mcp/tools/grepRepomixOutputTool.test.ts [2m([22m[2m49 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/actions/defaultAction.tokenBudget.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 37[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/cliTokenBudget.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+ [32mÔ£ô[39m tests/swarm/orchestrator.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+ [32mÔ£ô[39m tests/mcp/tools/attachPackedOutputTool.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/prompts/skillPrompts.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/file/filePathSort.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+stderr | tests/mcp/tools/fileSystemReadDirectoryTool.test.ts > FileSystemReadDirectoryTool > should report readdir failures via the outer catch
+Error in file_system_read_directory tool: Error: EACCES
+
+ [32mÔ£ô[39m tests/mcp/tools/fileSystemReadDirectoryTool.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32mÔ£ô[39m tests/mcp/tools/formatPackToolResponse.sandbox.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/file/fileManipulate.test.ts [2m([22m[2m84 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/git/gitRemoteParse.test.ts [2m([22m[2m41 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/packager/produceOutput.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+ [32mÔ£ô[39m tests/shared/errorHandle.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/security/workers/securityCheckWorker.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+ [32mÔ£ô[39m tests/config/configSchema.test.ts [2m([22m[2m42 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/file/fileTreeGenerate.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/output/diffsInOutput.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/output/flagFullDirectoryStructure.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+ [32mÔ£ô[39m tests/mcp/tools/readRepomixOutputTool.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+ [32mÔ£ô[39m tests/mcp/tools/packRemoteRepositoryTool.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/actions/initAction.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/prompts/remoteConfigTrustStore.test.ts [2m([22m[2m14 tests[22m[2m | [22m[33m6 skipped[39m[2m)[22m[32m 24[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/actions/migrationAction.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/commands/heatCommand.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/git/gitMetadataEndpoint.test.ts [2m([22m[2m33 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32mÔ£ô[39m tests/shared/processConcurrency.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/file/fileStdin.test.ts [2m([22m[2m20 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32mÔ£ô[39m tests/thermodynamics/gitActivity.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/skill/skillUtils.test.ts [2m([22m[2m37 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/file/fileProcess.inclusionLevel.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/file/fileProcess.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/git/gitLogHandle.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32mÔ£ô[39m tests/mcp/pathScope.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+ [32mÔ£ô[39m tests/mcp/tools.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32mÔ£ô[39m tests/memory/adaptiveEngine.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/file/permissionCheck.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/git/gitRemoteHandle.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/security/validateFileSafety.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/packager/copyToClipboardIfEnabled.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/output/outputStyleDecorate.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32mÔ£ô[39m tests/thermodynamics/complexity.test.ts [2m([22m[2m40 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+ [32mÔ£ô[39m tests/biomimicry/mutationOperators.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/parseFile.errorHandling.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/file/fileLevelResolve.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/skill/writeSkillOutput.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/packager/diffsFunctionality.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32mÔ£ô[39m tests/config/globalDirectory.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/output/outputStyles/jsonStyle.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32mÔ£ô[39m tests/mcp/prompts/packRemoteRepositoryPrompts.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/LanguageParser.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/actions/defaultAction.buildCliConfig.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/cliSpinner.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/actions/diffsFlag.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32mÔ£ô[39m tests/memory/vectorizer.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32mÔ£ô[39m tests/workflows/ciInfrastructure.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/packager/rootDisplayPath.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/smartSlice/importParser.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32mÔ£ô[39m tests/hooks/mutator.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32mÔ£ô[39m tests/thermodynamics/heatColors.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32mÔ£ô[39m tests/thermodynamics/temperature.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/metrics/diffTokenCount.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/git/gitRepositoryHandle.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/file/fileCollect.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/smartSlice/dependencyGraph.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32mÔ£ô[39m tests/thermodynamics/render.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/treeSitter/loadLanguage.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/metrics/workers/calculateMetricsWorker.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/file/fileProcessContent.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+ [32mÔ£ô[39m tests/mcp/serverJson.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/file/truncateBase64.test.ts [2m([22m[2m18 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32mÔ£ô[39m tests/shared/sizeParse.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/file/processOrderSpec.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32mÔ£ô[39m tests/shared/memoryUtils.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/metrics/fastOutputTokenPath.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32mÔ£ô[39m tests/healer/sensor.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/git/archiveEntryFilter.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32mÔ£ô[39m tests/workflows/publishWorkflows.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32mÔ£ô[39m tests/website/normalizeJsonSchema.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/cliReport.binaryFiles.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32mÔ£ô[39m tests/swarm/agents.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/file/packageJsonParse.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32mÔ£ô[39m tests/shared/patternUtils.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/tokenCount/buildTokenCountStructure.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/output/outputGenerateDiffs.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32mÔ£ô[39m tests/swarm/bus.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/packager/writeOutputToDisk.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32mÔ£ô[39m tests/website/cliCommand.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/smartSlice/restrict.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32mÔ£ô[39m tests/healer/diagnostician.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32mÔ£ô[39m tests/healer/types.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/actions/versionAction.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/actions/mcpAction.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/security/filterOutUntrustedFiles.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32mÔ£ô[39m tests/cli/smartSliceOptions.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32mÔ£ô[39m tests/shared/tmpDir.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32mÔ£ô[39m tests/core/file/fileSearchConfineSymlink.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32mÔ£ô[39m tests/biomimicry/evolutionIntegration.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 11634[2mms[22m[39m
+   [32mÔ£ô[39m full evolution cycle leaves the repository untouched [2m(5)[22m
+     [33m[2mÔ£ô[22m[39m leaves HEAD, the branch list, the index and every tracked file bit-identical[33m 2766[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m writes mutant content into the worktree only, never the source file[33m 2563[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m leaves the repository untouched even when every mutant fails[33m 2374[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m audits thermal differential for cooling operators[33m 2387[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m runs the whole pipeline against the real Git, thermal and mutation layers[33m 1541[2mms[22m[39m
+ [2m[90mÔåô[39m[22m tests/integration-tests/packager.test.ts [2m([22m[2m4 tests[22m[2m | [22m[33m4 skipped[39m[2m)[22m
+ [32mÔ£ô[39m tests/biomimicry/fitnessEvaluator.test.ts [2m([22m[2m23 tests[22m[2m)[22m[33m 30841[2mms[22m[39m
+   [32mÔ£ô[39m spawnPackageManager (real child process) [2m(3)[22m
+     [33m[2mÔ£ô[22m[39m passes when the manager exits zero[33m 353[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m fails with a reason when the manager exits non-zero[33m 339[2mms[22m[39m
+     [33m[2mÔ£ô[22m[39m labels a killed process as a timeout[33m 30134[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m194 passed[39m[22m[2m | [22m[33m1 skipped[39m[90m (195)[39m
+[2m      Tests [22m [1m[32m2308 passed[39m[22m[2m | [22m[33m24 skipped[39m[90m (2332)[39m
+[2m   Start at [22m 20:21:06
+[2m   Duration [22m 31.50s[2m (tests 64%, import 20%, transform 10%, worker 2%, setup 2%)[22m
+
+[2m    Isolate [22m [33m195 workers spawned[39m[2m ┬À ~230ms startup each (spawn + environment, per file)[22m
+[2m            [22m [2mat least ~3.85s faster with [22m[33misolate: false[39m[2m ÔÇö reuses workers across files instead of one per file[22m
+
