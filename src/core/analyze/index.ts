@@ -31,6 +31,56 @@ export interface FileAnalysis {
   exports?: string[];
 }
 
+/** Opciones del análisis. */
+export interface AnalyzeOptions {
+  /**
+   * Cuando es `true`, se expande el árbol de importaciones de forma transitiva y se
+   * calculan las métricas extendidas (`transitiveGraph`, `depthDistribution`,
+   * `transitiveFileCount`, `entryPoints`, `leafFiles`). Cuando es `false` —el valor
+   * por defecto— el análisis se detiene en el primer nivel: solo dependencias
+   * directas.
+   */
+  deep?: boolean;
+}
+
+/** Métricas agregadas del grafo de dependencias. */
+export interface AnalyzeSummary {
+  /** Archivos `.ts`/`.js` encontrados bajo la raíz. */
+  totalFiles: number;
+  /** Destinos distintos alcanzados por al menos una arista directa. */
+  totalUniqueDependencies: number;
+  /** Media de sentencias de importación por archivo. */
+  averageImportsPerFile: number;
+  /** Archivos que participan en al menos un ciclo, en rutas relativas a la raíz. */
+  filesWithCycles: string[];
+  /**
+   * Shallow: el nivel máximo alcanzado, que nunca pasa de 1 (las dependencias
+   * directas). Deep: la longitud de la ruta más larga del grafo.
+   */
+  maxImportDepth: number;
+  /** Solo en deep: archivos alcanzables a dos o más saltos. */
+  transitiveFileCount?: number;
+  /** Solo en deep: cantidad de archivos por distancia mínima desde una raíz. */
+  depthDistribution?: Record<string, number>;
+  /** Solo en deep: archivos de los que no importa nadie (raíces del grafo). */
+  entryPoints?: string[];
+  /** Solo en deep: archivos que no importan nada (hojas del grafo). */
+  leafFiles?: string[];
+}
+
+/** Resultado completo del análisis. */
+export interface AnalysisResult {
+  root: string;
+  /** `true` si el análisis se ejecutó con expansión transitiva. */
+  deep: boolean;
+  fileAnalysis: FileAnalysis[];
+  summary: AnalyzeSummary;
+  /** Aristas directas (un salto). Se rellena siempre. */
+  dependencyGraph: Record<string, string[]>;
+  /** Solo en deep: cierre transitivo por nodo. Objeto vacío en modo shallow. */
+  transitiveGraph: Record<string, string[]>;
+}
+
 /**
  * Parses import and export statements from TypeScript/JavaScript source
  *
@@ -72,23 +122,18 @@ export function parseImportExports(content: string, filePath: string): {
 
     // Match import statements
     if (trimmed.startsWith('import')) {
+      // Three shapes: `import * as x from 'p'`, `import { a } from 'p'`, and the
+      // side-effect form `import 'p'`. The bare-specifier branch must not repeat the
+      // `import` keyword — `^import\s+` already consumed it, so requiring it again
+      // silently dropped every side-effect import.
       const importMatch = trimmed.match(
-        /^import\s+(?:\*\s+from\s+['"](.+?)['"]|(?:[\w\s{},*]+\s+from\s+['"](.+?)['"])|(?:import\s+['"](.+?)['"]))/i
+        /^import\s+(?:\*\s+from\s+['"](.+?)['"]|[\w\s{},*]+\s+from\s+['"](.+?)['"]|['"](.+?)['"])/i
       );
 
       if (importMatch) {
-        let importPath: string;
-        if (importMatch[1]) {
-          importPath = importMatch[1];
-        } else if (importMatch[2]) {
-          importPath = importMatch[2];
-        } else if (importMatch[3]) {
-          importPath = importMatch[3];
-        } else {
-          importPath = '';
-        }
+        const importPath = importMatch[1] ?? importMatch[2] ?? importMatch[3] ?? '';
+        const normalizedPath = path.normalize(importPath);
 
-const normalizedPath = path.normalize(importPath);
         // "Is this relative?" must be decided on the raw specifier: `path.normalize`
         // turns './helper.ts' into 'helper.ts', so filtering on the normalized value
         // rejected every sibling import and left the graph empty.
@@ -117,10 +162,15 @@ export function walkFileTree(root: string): { tsFiles: string[]; jsFiles: string
   const tsFiles: string[] = [];
   const jsFiles: string[] = [];
 
-  const walkDir = (dir: string) => {
+  const walkDir = (dir: string): void => {
     const entries = fs.readdirSync(dir, { withFileTypes: true });
 
     for (const entry of entries) {
+      // Skip build/dependency trees: walking them costs minutes and finds nothing.
+      if (entry.isDirectory() && IGNORED_DIRECTORIES.has(entry.name)) {
+        continue;
+      }
+
       const fullPath = path.join(dir, entry.name);
 
       if (entry.isDirectory()) {
@@ -137,81 +187,71 @@ export function walkFileTree(root: string): { tsFiles: string[]; jsFiles: string
   return { tsFiles, jsFiles };
 }
 
+/** Directorios excluidos del recorrido: ruido que no aporta dependencias del proyecto. */
+const IGNORED_DIRECTORIES = new Set([
+  'node_modules',
+  '.git',
+  'dist',
+  'build',
+  'coverage',
+  'lib',
+  '.next',
+  'out',
+]);
+
 /**
- * Analyzes a project's dependency graph
+ * Analyzes a project's dependency graph.
  *
- * Walks the file tree, parses import/export statements,
- * resolves dependency paths, and detects cycles.
+ * Parses import/export statements and resolves relative dependency paths for every
+ * `.ts`/`.js` file under `root`.
+ *
+ * `deep` selects how far the graph is expanded:
+ * - `false` (default): only direct (one-hop) dependencies are mapped and reported.
+ * - `true`: the whole import tree is expanded transitively, adding `transitiveGraph`
+ *   plus the extended summary metrics.
  *
  * @param root - Root directory to analyze (default: process.cwd())
- * @returns Analysis result with metrics and graph data
+ * @param options - Analysis options (currently just `deep`)
  */
-/**
- * Analiza el grafo de dependencias de un proyecto.
- *
- * @param root - Directorio raiz a analizar (default: process.cwd())
- * @param deep - Cuando es `false`, solo se expanden las importaciones directas de cada
- *   archivo; cuando es `true` (default) se sigue el grafo transitivamente. La expansion
- *   transitiva ya es el comportamiento natural del resolvedor, asi que `false` limita
- *   el resultado a los vecinos directos sin reescribir el algoritmo.
- */
-export function runAnalysis(root: string = process.cwd(), deep: boolean = true): {
-  root: string;
-  fileAnalysis: FileAnalysis[];
-  summary: {
-    totalFiles: number;
-    totalUniqueDependencies: number;
-    averageImportsPerFile: number;
-    filesWithCycles: string[];
-    maxImportDepth: number;
-  };
-  dependencyGraph: Record<string, string[]>;
-} {
+export function runAnalysis(root: string = process.cwd(), options: AnalyzeOptions = {}): AnalysisResult {
+  const deep = options.deep === true;
   const absoluteRoot = path.resolve(root);
 
-  // Walk file tree and collect .ts and .js files
   const { tsFiles, jsFiles } = walkFileTree(absoluteRoot);
-  const allFiles = [...tsFiles, ...jsFiles].filter(
-    (f) => !fs.statSync(f).isDirectory()
-  );
+  const allFiles = [...tsFiles, ...jsFiles];
 
   if (allFiles.length === 0) {
     return {
       root: absoluteRoot,
+      deep,
       fileAnalysis: [],
-      summary: {
-        totalFiles: 0,
-        totalUniqueDependencies: 0,
-        averageImportsPerFile: 0,
-        filesWithCycles: [],
-        maxImportDepth: 0,
-      },
+      summary: emptySummary(deep),
       dependencyGraph: {},
+      transitiveGraph: {},
     };
   }
 
   // Parse each file's imports/exports
-  const filesMap = new Map<string, { imports: FileImport[] }>();
+  const filesMap = new Map<string, FileImport[]>();
 
   for (const filePath of allFiles) {
     try {
       const content = fs.readFileSync(filePath, 'utf-8');
       const { imports } = parseImportExports(content, filePath);
-      filesMap.set(filePath, { imports });
+      filesMap.set(filePath, imports);
     } catch {
       // Skip files that can't be read
     }
   }
 
-// Build dependency graph (simplified - just collect import paths)
+  // Direct (one-hop) edges: resolve relative to the importing file's directory.
+  // Using `dirname(imp.source)` would resolve against '.' because `source` is only a
+  // basename, so every sibling import was resolved from the process cwd instead.
   const dependencyGraph: Record<string, string[]> = {};
-  for (const [filePath, fileData] of filesMap) {
-    const deps: string[] = [];
-    // Resolve relative to the importing file's directory. Using `dirname(imp.source)`
-    // would resolve against '.' because `source` is only a basename, so every
-    // sibling import was resolved from the process cwd instead.
+  for (const [filePath, imports] of filesMap) {
     const fileDir = path.dirname(filePath);
-    for (const imp of fileData.imports) {
+    const deps: string[] = [];
+    for (const imp of imports) {
       const resolvedPath = path.normalize(path.resolve(fileDir, imp.importPath));
       if (fs.existsSync(resolvedPath)) {
         deps.push(resolvedPath);
@@ -220,67 +260,194 @@ export function runAnalysis(root: string = process.cwd(), deep: boolean = true):
     dependencyGraph[filePath] = deps;
   }
 
-  // Calculate summary metrics
   const allDeps = new Set<string>();
   for (const deps of Object.values(dependencyGraph)) {
     for (const dep of deps) {
       allDeps.add(dep);
     }
   }
-  const totalUniqueDependencies = allDeps.size;
 
-  let totalImports = 0;
-  for (const fileData of filesMap.values()) {
-    totalImports += fileData.imports.length;
-  }
+  const totalImports = allFiles.reduce((sum, filePath) => sum + (filesMap.get(filePath)?.length ?? 0), 0);
   const averageImportsPerFile = allFiles.length > 0 ? totalImports / allFiles.length : 0;
 
-  // Simple cycle detection using DFS
   const { hasCycles, cycles } = detectCyclesSimple(dependencyGraph);
 
-  // Files with cycles
   const filesWithCycles: string[] = [];
   if (hasCycles) {
-    for (const [filePath, deps] of Object.entries(dependencyGraph)) {
-      for (const cycle of cycles) {
-        if (cycle.includes(filePath)) {
-          filesWithCycles.push(path.relative(absoluteRoot, filePath));
-          break;
-        }
+    const seen = new Set<string>();
+    for (const [filePath] of Object.entries(dependencyGraph)) {
+      if (cycles.some((cycle) => cycle.includes(filePath)) && !seen.has(filePath)) {
+        seen.add(filePath);
+        filesWithCycles.push(path.relative(absoluteRoot, filePath));
       }
     }
   }
 
-  // Calculate import depths
-  const importDepths = calculateImportDepthsSimple(dependencyGraph);
+  const fileAnalysis: FileAnalysis[] = allFiles.map((filePath) => ({
+    path: path.relative(absoluteRoot, filePath),
+    imports: filesMap.get(filePath) ?? [],
+    language: filePath.endsWith('.ts') ? 'typescript' : 'javascript',
+  }));
 
-  // Build file analysis
-  const fileAnalysis: FileAnalysis[] = [];
+  const summary: AnalyzeSummary = {
+    totalFiles: allFiles.length,
+    totalUniqueDependencies: allDeps.size,
+    averageImportsPerFile: Number(averageImportsPerFile.toFixed(2)),
+    filesWithCycles,
+    // Shallow never looks past the first hop, so the deepest level it can report is 1.
+    maxImportDepth: deep ? maxDepth(calculateImportDepthsSimple(dependencyGraph)) : directDepth(dependencyGraph),
+  };
 
-  for (const filePath of allFiles) {
-    const deps = dependencyGraph[filePath] || [];
-    fileAnalysis.push({
-      path: path.relative(absoluteRoot, filePath),
-      imports: filesMap.get(filePath)?.imports || [],
-      language: filePath.endsWith('.ts') ? 'typescript' : 'javascript',
-    });
+  if (!deep) {
+    // Shallow mode: the closure is deliberately not computed, and the summary carries
+    // no extended metrics so callers cannot mistake absence for "zero".
+    return {
+      root: absoluteRoot,
+      deep,
+      fileAnalysis,
+      summary,
+      dependencyGraph,
+      transitiveGraph: {},
+    };
   }
+
+  const transitiveGraph = buildTransitiveClosure(dependencyGraph);
+
+  const importedBy = new Set<string>();
+  for (const deps of Object.values(dependencyGraph)) {
+    for (const dep of deps) {
+      importedBy.add(dep);
+    }
+  }
+
+  let transitiveFileCount = 0;
+  const depthDistribution: Record<string, number> = {};
+  for (const reachable of Object.values(transitiveGraph)) {
+    if (reachable.length > 0) {
+      transitiveFileCount += 1;
+    }
+  }
+
+  // Distribution of shortest distance from any file that imports the target.
+  const shortestDistance = computeShortestDistances(dependencyGraph);
+  for (const distance of shortestDistance.values()) {
+    const key = String(distance);
+    depthDistribution[key] = (depthDistribution[key] ?? 0) + 1;
+  }
+
+  summary.transitiveFileCount = transitiveFileCount;
+  summary.depthDistribution = depthDistribution;
+  // Nothing imports these -> they are the graph roots (the distance-0 set above).
+  summary.entryPoints = Object.keys(dependencyGraph)
+    .filter((filePath) => !importedBy.has(filePath))
+    .map((filePath) => path.relative(absoluteRoot, filePath))
+    .sort();
+  // These import nothing -> they are the graph leaves.
+  summary.leafFiles = Object.keys(dependencyGraph)
+    .filter((filePath) => (dependencyGraph[filePath] ?? []).length === 0)
+    .map((filePath) => path.relative(absoluteRoot, filePath))
+    .sort();
 
   return {
     root: absoluteRoot,
+    deep,
     fileAnalysis,
-    summary: {
-      totalFiles: allFiles.length,
-      totalUniqueDependencies: totalUniqueDependencies,
-      averageImportsPerFile: Number(averageImportsPerFile.toFixed(2)),
-      filesWithCycles: filesWithCycles.length > 0 ? filesWithCycles : [],
-      maxImportDepth:
-        importDepths && Object.values(importDepths).length > 0
-          ? Math.max(...Object.values(importDepths))
-          : 0,
-    },
+    summary,
     dependencyGraph,
+    transitiveGraph,
   };
+}
+
+/** Resumen vacío para proyectos sin archivos analizables. */
+const emptySummary = (deep: boolean): AnalyzeSummary => ({
+  totalFiles: 0,
+  totalUniqueDependencies: 0,
+  averageImportsPerFile: 0,
+  filesWithCycles: [],
+  maxImportDepth: 0,
+  ...(deep ? { transitiveFileCount: 0, depthDistribution: {}, entryPoints: [], leafFiles: [] } : {}),
+});
+
+/** Profundidad maxima directa: 1 si existe alguna arista, 0 si el grafo esta vacio. */
+const directDepth = (graph: Record<string, string[]>): number => {
+  for (const deps of Object.values(graph)) {
+    if (deps.length > 0) {
+      return 1;
+    }
+  }
+  return 0;
+};
+
+const maxDepth = (depths: Record<string, number>): number => {
+  const values = Object.values(depths);
+  return values.length > 0 ? Math.max(...values) : 0;
+};
+
+/**
+ * Cierre transitivo: para cada nodo, el conjunto de archivos alcanzables a dos o mas
+ * saltos. Usa una pila iterativa con conjunto `seen`, de modo que los ciclos no cuelgan
+ * la recursion.
+ */
+export function buildTransitiveClosure(graph: Record<string, string[]>): Record<string, string[]> {
+  const closure: Record<string, string[]> = {};
+
+  for (const start of Object.keys(graph)) {
+    const seen = new Set<string>();
+    const stack = [...(graph[start] ?? [])];
+
+    while (stack.length > 0) {
+      const current = stack.pop() as string;
+      if (current === start || seen.has(current)) {
+        continue;
+      }
+      seen.add(current);
+      for (const next of graph[current] ?? []) {
+        if (next !== start && !seen.has(next)) {
+          stack.push(next);
+        }
+      }
+    }
+
+    closure[start] = [...seen].sort();
+  }
+
+  return closure;
+}
+
+/**
+ * Distancia minima (en numero de saltos) desde cualquier archivo raiz —uno que no es
+ * importado por nadie— hasta cada nodo. Los nodos que nunca se alcanzan se omiten.
+ */
+function computeShortestDistances(graph: Record<string, string[]>): Map<string, number> {
+  const imported = new Set<string>();
+  for (const deps of Object.values(graph)) {
+    for (const dep of deps) {
+      imported.add(dep);
+    }
+  }
+
+  const distances = new Map<string, number>();
+  const queue: Array<{ node: string; distance: number }> = [];
+
+  for (const node of Object.keys(graph)) {
+    if (!imported.has(node)) {
+      distances.set(node, 0);
+      queue.push({ node, distance: 0 });
+    }
+  }
+
+  while (queue.length > 0) {
+    const { node, distance } = queue.shift() as { node: string; distance: number };
+    for (const next of graph[node] ?? []) {
+      if (distances.has(next)) {
+        continue;
+      }
+      distances.set(next, distance + 1);
+      queue.push({ node: next, distance: distance + 1 });
+    }
+  }
+
+  return distances;
 }
 
 /**
@@ -311,7 +478,7 @@ function detectCyclesSimple(graph: Record<string, string[]>): { hasCycles: boole
     path.pop();
     visited[node] = 'black';
     return false;
-  }
+  };
 
   for (const node of Object.keys(graph)) {
     if (visited[node] === 'white') {
@@ -327,37 +494,46 @@ function graphHasKey(graph: Record<string, string[]>, key: string): boolean {
 }
 
 /**
- * Simple import depth calculation
+ * Longest-path depth per node.
+ *
+ * The previous implementation shared one `visited` set across every start node and
+ * only marked a node once its recursion returned, so a cycle (`a -> b -> a`)
+ * recursed forever until the stack blew up, and in an acyclic graph with shared
+ * dependencies the depth depended on which node happened to be visited first. This
+ * version memoises per node and treats a back-edge as depth 0, which is well defined
+ * for both DAGs and cyclic graphs.
  */
 export function calculateImportDepthsSimple(graph: Record<string, string[]>): Record<string, number> {
-  const depths: Record<string, number> = {};
-  const visited: Set<string> = new Set();
+  const depths = new Map<string, number>();
+  const onStack = new Set<string>();
 
-  const bfsCalculateDepth = (startNode: string): number => {
-    if (visited.has(startNode)) return depths[startNode];
-    const neighbors = graph[startNode] || [];
-    if (neighbors.length === 0) {
-      visited.add(startNode);
-      depths[startNode] = 0;
+  const visit = (node: string): number => {
+    const memoised = depths.get(node);
+    if (memoised !== undefined) {
+      return memoised;
+    }
+    // Back-edge: the node is already on the current path, so stop descending.
+    if (onStack.has(node)) {
       return 0;
     }
-    let maxChildDepth = 0;
-    for (const neighbor of neighbors) {
-      if (!visited.has(neighbor)) {
-        const childDepth = bfsCalculateDepth(neighbor);
-        maxChildDepth = Math.max(maxChildDepth, childDepth);
+
+    onStack.add(node);
+    let deepest = 0;
+    for (const neighbour of graph[node] ?? []) {
+      if (!graphHasKey(graph, neighbour)) {
+        continue;
       }
+      deepest = Math.max(deepest, 1 + visit(neighbour));
     }
-    visited.add(startNode);
-    depths[startNode] = maxChildDepth + 1;
-    return depths[startNode];
+    onStack.delete(node);
+
+    depths.set(node, deepest);
+    return deepest;
   };
 
   for (const node of Object.keys(graph)) {
-    if (!visited.has(node)) {
-      bfsCalculateDepth(node);
-    }
+    visit(node);
   }
-  return depths;
-}
 
+  return Object.fromEntries(depths);
+}

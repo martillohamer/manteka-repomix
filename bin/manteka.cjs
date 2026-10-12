@@ -46,7 +46,10 @@ setTimeout(async () => {
   try {
     setupErrorHandlers();
 
-    const { main } = await import('../src/cli/index.js', { assert: { type: 'module' } });
+    // Must point at the build output, matching repomix.cjs/manteka-mcp.cjs. Importing
+    // from ../src resolves to a .ts file that never exists at runtime, so every
+    // `manteka <cmd>` invocation died with ERR_MODULE_NOT_FOUND.
+    const { main } = await import('../lib/cli/index.js', { assert: { type: 'module' } });
     await main();
   } catch (error) {
     if (error instanceof Error) {

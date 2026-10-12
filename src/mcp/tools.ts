@@ -164,16 +164,17 @@ export const manteka_memory_search = async (
  *
  * Parámetros:
  * - root: Directorio raíz del códigobase para analizar (default: cwd)
- * - deep: Si true, incluye análisis transitivo de dependencias (default: true)
+ * - deep: Si true, expande el árbol de importaciones de forma transitiva y añade las
+ *   métricas extendidas; si false (default) solo reporta dependencias directas
  * - output: Formato de salida 'text' o 'json' (default: text)
  */
 export const manteka_analyze_codebase = async (
   root: string = process.cwd(),
-  deep: boolean = true,
+  deep: boolean = false,
   output: 'text' | 'json' = 'text'
 ): Promise<string> => {
   try {
-    const result = runAnalysis(root, deep);
+    const result = runAnalysis(root, { deep });
 
     if (output === 'json') {
       return JSON.stringify(result, null, 2);
@@ -200,7 +201,15 @@ export const manteka_analyze_codebase = async (
 
     // Import depth
     lines.push('📏 Import Depth Distribution');
+    lines.push(`   Mode: ${result.deep ? 'deep (transitive)' : 'shallow (direct dependencies only)'}`);
     lines.push(`   Maximum import depth: ${result.summary.maxImportDepth}`);
+    if (result.deep && result.summary.depthDistribution) {
+      const distribution = Object.entries(result.summary.depthDistribution)
+        .sort(([a], [b]) => Number(a) - Number(b))
+        .map(([distance, count]) => `depth ${distance}: ${count} file(s)`);
+      lines.push(`   Files by distance from a root: ${distribution.join(', ') || 'none'}`);
+      lines.push(`   Files reachable transitively: ${result.summary.transitiveFileCount ?? 0}`);
+    }
     lines.push('');
 
     // Circular dependency alerts

@@ -72,14 +72,39 @@ describe('manteka_analyze_codebase tool', () => {
     expect(indexDeps).toContain(path.join(path.resolve(projectDir), 'src', 'helper.ts'));
   });
 
-  it('accepts deep parameter', async () => {
-    // `deep` is part of the tool's contract: both values must produce a well-formed
-    // result rather than throwing.
-    const shallow = await manteka_analyze_codebase(projectDir, false);
-    const deep = await manteka_analyze_codebase(projectDir, true);
+it('accepts deep parameter', async () => {
+    // `deep` must actually change the analysis, not merely be accepted. The shared
+    // fixture is a single hop, so build a three-level chain here: only a transitive
+    // expansion can connect index.ts to leaf.ts.
+    const chainDir = await fs.mkdtemp(path.join(os.tmpdir(), 'manteka-analyze-chain-'));
+    try {
+      await fs.mkdir(path.join(chainDir, 'src'), { recursive: true });
+      await fs.writeFile(path.join(chainDir, 'src', 'index.ts'), "import './middle.ts';\n", 'utf-8');
+      await fs.writeFile(path.join(chainDir, 'src', 'middle.ts'), "import './leaf.ts';\n", 'utf-8');
+      await fs.writeFile(path.join(chainDir, 'src', 'leaf.ts'), 'export const leaf = 1;\n', 'utf-8');
 
-    expect(shallow).toContain('Files analyzed: 2');
-    expect(deep).toContain('Files analyzed: 2');
+      const shallow = JSON.parse(await manteka_analyze_codebase(chainDir, false, 'json'));
+      const deep = JSON.parse(await manteka_analyze_codebase(chainDir, true, 'json'));
+
+      expect(shallow.deep).toBe(false);
+      expect(deep.deep).toBe(true);
+
+      // Shallow stops at the direct import; deep walks the whole chain.
+      expect(shallow.summary.maxImportDepth).toBe(1);
+      expect(deep.summary.maxImportDepth).toBe(2);
+
+      // The transitive closure only exists in deep mode.
+      expect(shallow.transitiveGraph).toEqual({});
+      expect(deep.transitiveGraph[path.join(path.resolve(chainDir), 'src', 'index.ts')]).toEqual(
+        expect.arrayContaining([path.join(path.resolve(chainDir), 'src', 'leaf.ts')]),
+      );
+
+      // Text mode surfaces the mode so the difference is visible to a human too.
+      expect(await manteka_analyze_codebase(chainDir, false)).toContain('shallow');
+      expect(await manteka_analyze_codebase(chainDir, true)).toContain('deep (transitive)');
+    } finally {
+      await fs.rm(chainDir, { recursive: true, force: true });
+    }
   });
 
   it('does not throw on an empty directory', async () => {
