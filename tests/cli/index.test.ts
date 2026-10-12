@@ -16,7 +16,9 @@ const originalExit = process.exit;
 
 beforeEach(() => {
   vi.clearAllMocks();
-  process.exit = vi.fn();
+  // process.exit returns `never`; the mock cannot model that, so cast at the seam
+  // rather than weakening every call site's type.
+  process.exit = vi.fn() as unknown as typeof process.exit;
 });
 
 afterEach(() => {
@@ -81,7 +83,7 @@ describe('Phase 14: CLI Commands', () => {
 
 describe('Phase 14: CLI Integration', () => {
   test('main exits successfully', async () => {
-    process.exit = vi.fn();
+    process.exit = vi.fn() as unknown as typeof process.exit;
     await main();
   });
 

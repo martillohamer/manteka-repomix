@@ -37,11 +37,31 @@ export interface SwarmOrchestratorResult {
 }
 
 /**
+ * Lee la confianza declarada por un agente en `metadata.proposedPatch.confidence`.
+ *
+ * `AgentMessage.metadata` es `Record<string, unknown>`: el parche es opcional y solo
+ * lo añaden los mensajes de tipo "patch", así que se valida la forma en runtime en
+ * lugar de asumirla. Un valor ausente o no numérico cae al umbral por defecto.
+ */
+const readProposedConfidence = (message: AgentMessage): number => {
+  const proposedPatch = message.metadata?.proposedPatch;
+  if (
+    typeof proposedPatch === 'object' &&
+    proposedPatch !== null &&
+    'confidence' in proposedPatch &&
+    typeof (proposedPatch as { confidence: unknown }).confidence === 'number'
+  ) {
+    return (proposedPatch as { confidence: number }).confidence;
+  }
+  return 0.5;
+};
+
+/**
  * Orchestrador principal del enjambre - coordina agentes multi-agente
  */
 export class SwarmOrchestrator {
   private deps: SwarmOrchestratorDeps;
-  private bus: import('./bus.js').SwarmEventBus;
+  private bus: typeof SwarmEventBus;
   private state: SwarmOrchestratorState;
   private agents: Map<AgentRole, SwarmAgent>;
   private proposalCounter: number;
@@ -92,7 +112,6 @@ export class SwarmOrchestrator {
    */
   public start = (): void => {
     this.state.isRunning = true;
-    // @ts-expect-error
     this.bus.publish({
       id: 'orchestrator-start',
       role: 'typeAgent',
@@ -129,20 +148,19 @@ export class SwarmOrchestrator {
       throw new Error('Swarm Orchestrator is not running');
     }
 
-    // Step 1: Read file content (using deps or fallback)
-    const readFile =
-      this.deps.readFile ??
-      (async () => {
-        try {
-          const fs = await import('node:fs');
-          const content = await fs.promises.readFile(filePath, 'utf-8');
-          return content;
-        } catch {
-          return '';
-        }
-      })();
+// Step 1: Read file content (using deps or fallback)
+const readFile: (file: string) => Promise<string | null> =
+  this.deps.readFile ??
+  (async () => {
+    try {
+      const fs = await import('node:fs');
+      return await fs.promises.readFile(filePath, 'utf-8');
+    } catch {
+      return '';
+    }
+  });
 
-    const content = await readFile;
+const content = (await readFile(filePath)) ?? '';
 
     const events: AgentMessage[] = [];
     const allProposals: SwarmProposal[] = [];
@@ -160,10 +178,10 @@ export class SwarmOrchestrator {
         patch: {
           file: msg.sourceFile,
           diff: '',
-          confidence: msg.metadata?.proposedPatch?.confidence ?? 0.5,
+          confidence: readProposedConfidence(msg),
         },
         rationale: msg.message,
-        confidence: msg.metadata?.proposedPatch?.confidence ?? 0.5,
+        confidence: readProposedConfidence(msg),
         timestamp: msg.timestamp,
       });
     });
@@ -180,10 +198,10 @@ export class SwarmOrchestrator {
         patch: {
           file: msg.sourceFile,
           diff: '',
-          confidence: msg.metadata?.proposedPatch?.confidence ?? 0.5,
+          confidence: readProposedConfidence(msg),
         },
         rationale: msg.message,
-        confidence: msg.metadata?.proposedPatch?.confidence ?? 0.5,
+        confidence: readProposedConfidence(msg),
         timestamp: msg.timestamp,
       });
     });
@@ -200,10 +218,10 @@ export class SwarmOrchestrator {
         patch: {
           file: msg.sourceFile,
           diff: '',
-          confidence: msg.metadata?.proposedPatch?.confidence ?? 0.5,
+          confidence: readProposedConfidence(msg),
         },
         rationale: msg.message,
-        confidence: msg.metadata?.proposedPatch?.confidence ?? 0.5,
+        confidence: readProposedConfidence(msg),
         timestamp: msg.timestamp,
       });
     });
@@ -233,7 +251,7 @@ export class SwarmOrchestrator {
 
     return {
       success: selected !== null,
-      proposal: selected,
+      proposal: selected ?? undefined,
       rejected,
       events,
     };

@@ -12,14 +12,38 @@ import * as events from 'node:events';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 
+// Import runtime values
+import { JsonRpcError, JsonRpcErrorCodes, resolveSafePath, makeRelativePath } from './types.js';
+
 // Import types
-import { JsonRpcError, JsonRpcErrorCodes, RpcRequest, RpcResponse, RpcNotification,
-  InitializeRequest, InitializeResponse, ToolsListRequest, ToolsListResponse,
-  ToolCallRequest, ToolCallResponse, PromptsListRequest, PromptsListResponse,
-  ResourcesListRequest, ResourcesListResponse, MantekaTool, MantekaPrompt,
-  MantekaResource, QualityGateVerdict, McpServerConfig, OnRequestListener,
-  OnToolCallListener, OnInitializeListener, OnToolsListListener, OnNotificationListener,
-  resolveSafePath, makeRelativePath } from './types.js';
+import type {
+  RpcRequest,
+  RpcResponse,
+  RpcNotification,
+  InitializeRequest,
+  InitializeResponse,
+  ToolsListRequest,
+  ToolsListResponse,
+  ToolCallRequest,
+  ToolCallResponse,
+  PromptsListRequest,
+  PromptsListResponse,
+  ResourcesListRequest,
+  ResourcesListResponse,
+  MantekaTool,
+  MantekaToolName,
+  MantekaPrompt,
+  MantekaResource,
+  QualityGateVerdict,
+  McpServerConfig,
+  OnRequestListener,
+  OnToolCallListener,
+  OnInitializeListener,
+  OnToolsListListener,
+  OnPromptsListListener,
+  OnResourcesListListener,
+  OnNotificationListener,
+} from './types.js';
 
 // ===========================
 // MCP Server Class
@@ -35,12 +59,14 @@ export class MCPServer extends events.EventEmitter {
   private readonly serverVersion: string;
   private readonly root: string;
   private readonly sandboxed: boolean;
-  private rl: readline.Interface;
-  private pendingResponses: Map<string | number, { resolve: (value: RpcResponse) => void; reject: (reason: Error) => void }>;
-  private toolHandlers: Map<MantekaToolName, OnToolCallListener>;
-  private initListeners: OnInitializeListener[];
-  private toolsListListeners: OnToolsListListener[];
-  private notificationListeners: OnNotificationListener[];
+private rl?: readline.Interface;
+private pendingResponses: Map<string | number, { resolve: (value: RpcResponse) => void; reject: (reason: Error) => void }>;
+private toolHandlers: Map<MantekaToolName, OnToolCallListener>;
+private initListeners: OnInitializeListener[];
+private toolsListListeners: OnToolsListListener[];
+private promptsListListeners: OnPromptsListListener[];
+private resourcesListListeners: OnResourcesListListener[];
+private notificationListeners: OnNotificationListener[];
 
   /**
    * Creates a new MCPServer instance
@@ -57,6 +83,8 @@ export class MCPServer extends events.EventEmitter {
     this.toolHandlers = new Map();
     this.initListeners = [];
     this.toolsListListeners = [];
+    this.promptsListListeners = [];
+    this.resourcesListListeners = [];
     this.notificationListeners = [];
   }
 
@@ -86,7 +114,7 @@ export class MCPServer extends events.EventEmitter {
    * Stops the server gracefully
    */
   public stop(): void {
-    this.rl.close();
+    this.rl?.close();
     this.pendingResponses.clear();
     this.emit('server:stopped');
   }
@@ -110,6 +138,20 @@ export class MCPServer extends events.EventEmitter {
    */
   public onToolsList(listener: OnToolsListListener): void {
     this.toolsListListeners.push(listener);
+  }
+
+  /**
+   * Registers a prompts/list listener
+   */
+  public onPromptsList(listener: OnPromptsListListener): void {
+    this.promptsListListeners.push(listener);
+  }
+
+  /**
+   * Registers a resources/list listener
+   */
+  public onResourcesList(listener: OnResourcesListListener): void {
+    this.resourcesListListeners.push(listener);
   }
 
   /**
@@ -176,7 +218,7 @@ export class MCPServer extends events.EventEmitter {
    * Handles stdio close event
    */
   private handleStdioClose(): void {
-    this.rl.close();
+    this.rl?.close();
     this.pendingResponses.clear();
     this.emit('server:stopped');
   }
@@ -184,7 +226,7 @@ export class MCPServer extends events.EventEmitter {
   /**
    * Handles an incoming JSON-RPC request
    */
-  private async handleRequest(request: RpcRequest): void {
+  private async handleRequest(request: RpcRequest): Promise<void> {
     const { method, id, params } = request;
 
     try {
@@ -342,7 +384,8 @@ export class MCPServer extends events.EventEmitter {
       };
     }
 
-    // Look up tool handler
+    // Look up tool handler. The wire `name` is an unvalidated string; the lookup key
+    // is the same string, so narrowing it here keeps the handler signature honest.
     const handler = this.toolHandlers.get(name as MantekaToolName);
 
     if (!handler) {
@@ -356,7 +399,7 @@ export class MCPServer extends events.EventEmitter {
     }
 
     try {
-      const result = await handler(name, args || {});
+      const result = await handler(name as MantekaToolName, args || {});
       return {
         id,
         result: {
@@ -380,7 +423,9 @@ export class MCPServer extends events.EventEmitter {
   private async handlePromptsList(): Promise<PromptsListResponse> {
     let prompts: MantekaPrompt[] = [];
 
-    for (const listener of this.toolsListListeners) {
+    // Prompt listeners are registered via onPromptsList; the tools/list listeners
+    // yield MantekaTool[], which must never be served as prompts.
+    for (const listener of this.promptsListListeners) {
       try {
         const listenerPrompts = await listener();
         prompts = prompts.concat(listenerPrompts);
@@ -407,7 +452,8 @@ export class MCPServer extends events.EventEmitter {
   private async handleResourcesList(): Promise<ResourcesListResponse> {
     let resources: MantekaResource[] = [];
 
-    for (const listener of this.toolsListListeners) {
+    // Resources come from their own listeners, not from the tools/list ones.
+    for (const listener of this.resourcesListListeners) {
       try {
         const listenerResources = await listener();
         resources = resources.concat(listenerResources);

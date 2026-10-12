@@ -1,3 +1,0 @@
-// TODO: UNUSED
-// TODO: UNUSED
-const foo = 1;

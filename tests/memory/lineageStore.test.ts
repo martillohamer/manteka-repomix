@@ -4,8 +4,19 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createLineageStore, type LineageRecord } from '../../src/memory/lineageStore.js';
+import { createLineageStore } from '../../src/memory/lineageStore.js';
+// `LineageRecord` is declared in memory/types.ts; lineageStore.ts only imports it.
+import type { LineageRecord } from '../../src/memory/types.js';
 import { tokenize } from '../../src/memory/vectorizer.js';
+
+/**
+ * Reads a numeric value out of a record's loosely-typed metadata bag.
+ * Returns undefined when absent or not a number.
+ */
+const numericMetadata = (record: LineageRecord, key: string): number | undefined => {
+  const value = record.metadata?.[key];
+  return typeof value === 'number' ? value : undefined;
+};
 
 const testStoreDir = `${__dirname}/../../tmp/memory-lineage-${Date.now()}`;
 
@@ -120,12 +131,15 @@ describe('LineageStore', () => {
     });
 
     test('orders results by similarity descending', () => {
-      const results = store.findSimilar('authentication');
+      // Default threshold (0.5) yields nothing for a single-token query, so the
+      // threshold is lowered here to guarantee a multi-record result set; otherwise
+      // there is no ordering left to assert.
+      const results = store.findSimilar('authentication module', 0.1);
+      expect(results.length).toBeGreaterThanOrEqual(2);
 
-      // First result should have highest similarity
-      expect(results[0]).toBeDefined;
-      if (results[1]) {
-        expect(results[0].metadata?.similarity).toBeGreaterThanOrEqual(results[1].metadata?.similarity ?? 0);
+      const similarities = results.map((record) => numericMetadata(record, 'similarity') ?? 0);
+      for (let index = 1; index < similarities.length; index++) {
+        expect(similarities[index - 1]).toBeGreaterThanOrEqual(similarities[index]);
       }
     });
 

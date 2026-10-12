@@ -6,8 +6,8 @@ import { SwarmEventBus } from '../../src/swarm/bus.js';
 import type { AgentMessage, AgentRole } from '../../src/swarm/types.js';
 
 beforeEach(() => {
-  // Reset the singleton bus between tests
-  // @ts-expect-error - accessing internal reset method for test cleanup
+  // Reset the singleton bus between tests. `reset` is part of the concrete bus
+  // object; the `as any` cast keeps this test-only cleanup from widening the type.
   (SwarmEventBus as any).reset?.();
 });
 
@@ -39,7 +39,8 @@ describe('SwarmEventBus', () => {
     const bus = SwarmEventBus;
     const message: AgentMessage = {
       id: 'msg-2',
-      role: 'unknownRole',
+      // Deliberately outside the AgentRole union: the bus must tolerate it.
+      role: 'unknownRole' as AgentRole,
       timestamp: Date.now(),
       sourceFile: 'test.ts',
       severity: 'info',
@@ -50,7 +51,8 @@ describe('SwarmEventBus', () => {
 
   test('getSubscribers returns 0 for unsubscribed role', () => {
     const bus = SwarmEventBus;
-    expect(bus.getSubscribers('nonexistent')).toBe(0);
+    // Same as above: an unknown role must simply have no subscribers.
+    expect(bus.getSubscribers('nonexistent' as AgentRole)).toBe(0);
   });
 
   test('multiple subscribers for same role', () => {

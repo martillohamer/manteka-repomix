@@ -7,7 +7,20 @@
  */
 
 export { createAndStartMcpServer } from './server.js';
-export { registerMantekaTools } from './tools.js';
-export { McpServer, QualityGateVerdict, McpServerConfig } from './types.js';
-export { manteka_heal, manteka_swarm_query, manteka_memory_search, manteka_quality_gate } from './tools.js';
+export type { MCPServer } from './server.js';
+export { registerMantekaTools, registerMantekaToolsForSdk } from './tools.js';
+// `QualityGateVerdict` and `McpServerConfig` are types, so they must be re-exported
+// through `export type` while `verbatimModuleSyntax` is enabled. `McpServer` was
+// never exported from types.ts — the native class is `MCPServer` (in server.js) and
+// the SDK class lives in mcpServer.ts.
+export type { QualityGateVerdict, McpServerConfig } from './types.js';
+export {
+  manteka_heal,
+  manteka_swarm_query,
+  manteka_memory_search,
+  manteka_quality_gate,
+  manteka_doctor,
+  manteka_analyze_codebase,
+  manteka_smart_slice,
+} from './tools.js';
 export { JsonRpcError, JsonRpcErrorCodes } from './types.js';

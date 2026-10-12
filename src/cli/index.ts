@@ -15,11 +15,16 @@ import { Command } from 'commander';
 
 // Import Manteka modules (native imports, no external runtime deps)
 import { createAndStartMcpServer } from '../mcp/server.js';
+import type { MCPServer } from '../mcp/server.js';
 import { registerMantekaTools } from '../mcp/tools.js';
 import { getVersion } from '../core/file/packageJsonParse.js';
 import { handleError } from '../shared/errorHandle.js';
+import { registerMcpInspectCommand } from './commands/mcpInspect.js';
 import { registerDashboardCommand } from './commands/dashboardCommand.js';
+import { registerDoctorCommand } from './commands/doctor.js';
+import { registerSliceCommand } from './commands/slice.js';
 import { registerEvolveCommand } from './commands/evolveCommand.js';
+import { registerAnalyzeCommand, runAnalyzeCommand } from './commands/analyzeCommand.js';
 import { registerStatusCommand } from './commands/statusCommand.js';
 import { registerWatchCommand } from './commands/watchCommand.js';
 
@@ -27,7 +32,9 @@ import { registerWatchCommand } from './commands/watchCommand.js';
 // MCP Server Management
 // ===========================
 
-let mcpServer: ReturnType<typeof createAndStartMcpServer> | null = null;
+// The awaited instance, not the factory's promise: callers below invoke `.stop()`
+// on it, so the handle must hold the resolved server.
+let mcpServer: MCPServer | null = null;
 
 /**
  * Starts the MCP Stdio server
@@ -41,8 +48,9 @@ const startMcpserver = async (): Promise<void> => {
       sandboxed: false,
     };
 
-    mcpServer = await createAndStartMcpServer(config);
-    registerMantekaTools(mcpServer!);
+    const server = await createAndStartMcpServer(config);
+    registerMantekaTools(server);
+    mcpServer = server;
 
     // Listen for process exit to graceful shutdown
     process.on('beforeExit', () => {
@@ -215,6 +223,13 @@ const main = async (): Promise<void> => {
     case 'version':
       await runVersion();
       break;
+    case 'analyze':
+      await runAnalyzeCommand(args);
+      break;
+    case 'inspect':
+      console.log('manteka mcp inspect command is available');
+      console.log('Usage: manteka mcp inspect --json');
+      break;
     case 'dashboard':
       // TODO: Implement dashboard command start
       console.log('manteka dashboard command is available but requires further implementation');
@@ -240,6 +255,8 @@ const showHelp = (): void => {
   console.log('  serve    Start MCP Stdio server transport');
   console.log('  doctor   Health check of all subsystems (Healer, Swarm, Memory, Hooks)');
   console.log('  version  Show version information');
+  console.log('  analyze  Analyze TypeScript/JavaScript project dependency graph');
+  console.log('  inspect  Inspect MCP registered tools');
   console.log('  dashboard  Serve the biometric web dashboard');
   console.log('');
   console.log('Examples:');
@@ -335,16 +352,24 @@ export const createMantekaProgram = (): import('commander').Command => {
     .description('Start MCP Stdio server transport');
 
   program
-    .command('doctor')
-    .description('Health check of all subsystems');
-
-  program
     .command('version')
     .description('Show version information');
 
   program
-    .command('dashboard')
-    .description('Serve the biometric web dashboard');
+    .command('analyze')
+    .description('Analyze TypeScript/JavaScript project dependency graph')
+    .argument('[root]', 'Root directory to analyze', process.cwd())
+    .option(
+      '--deep',
+      'Perform deep transitive dependency analysis',
+      true,
+      Boolean
+    )
+    .option(
+      '--output <format>',
+      'Output format: text or json',
+      'text'
+    )
 
   // Register evolve command
   registerEvolveCommand(program);
@@ -354,6 +379,18 @@ export const createMantekaProgram = (): import('commander').Command => {
 
   // Register watch command
   registerWatchCommand(program);
+
+  // Register MCP inspect command
+  registerMcpInspectCommand(program);
+
+  // Register slice command
+  registerSliceCommand(program);
+
+  // Register dashboard command
+  registerDashboardCommand(program);
+
+  // Register doctor command
+  registerDoctorCommand(program);
 
   return program;
 };

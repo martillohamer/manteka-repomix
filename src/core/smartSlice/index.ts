@@ -19,6 +19,15 @@ export const buildSmartSliceClosure = async (options: SmartSliceOptions): Promis
 export { buildClosure } from './dependencyGraph.js';
 export type { ResolveSpecifierArgs } from './importParser.js';
 export {
+  assertSliceExportFormat,
+  collectSliceExportModel,
+  formatSliceExport,
+  SLICE_EXPORT_FORMATS,
+  SLICE_EXPORT_MAX_FILE_CHARS,
+  writeSliceExport,
+} from './export.js';
+export type { SliceExportFile, SliceExportFormat, SliceExportModel } from './export.js';
+export {
   extractImportSpecifiers,
   isInsideRoot,
   RESOLVABLE_EXTENSIONS,

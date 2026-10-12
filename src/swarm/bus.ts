@@ -1,14 +1,16 @@
-const subscribers: Map<AgentRole, Array<(message: import('./types.js').AgentMessage) => void>> = new Map();
+import type { AgentMessage, AgentRole } from './types.js';
+
+const subscribers: Map<AgentRole, Array<(message: AgentMessage) => void>> = new Map();
 
 export const SwarmEventBus = {
-  subscribe(role: AgentRole, handler: (message: import('./types.js').AgentMessage) => void) {
+  subscribe(role: AgentRole, handler: (message: AgentMessage) => void) {
     if (!subscribers.has(role)) {
       subscribers.set(role, []);
     }
     subscribers.get(role)!.push(handler);
   },
 
-  publish(message: import('./types.js').AgentMessage) {
+  publish(message: AgentMessage) {
     const handlers = subscribers.get(message.role) || [];
     handlers.forEach((handler) => {
       try {

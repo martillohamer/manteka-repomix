@@ -81,7 +81,8 @@ const done = !pending;
         id: 'diag-' + Date.now(),
         timestamp: Date.now(),
         sourceFile: syntheticFile,
-        operation: 'diagnose',
+        // LineageRecord.operation only accepts insert|update|delete|transform.
+        operation: 'transform',
         description: syntheticDiagnostic.description,
         confidence: syntheticDiagnostic.confidence,
       });

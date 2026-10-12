@@ -42,13 +42,20 @@ const subcommand = (program: Command, name: string): Command => {
 };
 
 describe('manteka command parsing', () => {
-  it('exposes the evolve, status and watch commands', () => {
-    vi.resetModules();
+  it('exposes the evolve, status, watch, analyze, inspect, slice, dashboard and doctor commands', () => {
     const program = createMantekaProgram();
     const commandNames = program.commands.map((cmd) => cmd.name());
-    expect(commandNames).toEqual(expect.arrayContaining([
-      'evolve', 'status', 'watch', 'dashboard', 'serve', 'doctor', 'version',
-    ]));
+    // Verify all required commands are present (allow extra commands like 'serve')
+    expect(commandNames).toContain('evolve');
+    expect(commandNames).toContain('status');
+    expect(commandNames).toContain('watch');
+    expect(commandNames).toContain('analyze');
+    expect(commandNames).toContain('inspect');
+    expect(commandNames).toContain('slice');
+    expect(commandNames).toContain('dashboard');
+    expect(commandNames).toContain('serve');
+    expect(commandNames).toContain('doctor');
+    expect(commandNames).toContain('version');
   });
 
   it('routes manteka evolve with its documented options', async () => {

@@ -11,6 +11,7 @@ import type {
   SwarmOrchestratorState,
 } from '../../src/swarm/orchestrator.js';
 import { createSwarmOrchestrator } from '../../src/swarm/orchestrator.js';
+import type { AgentRole, SwarmDeps } from '../../src/swarm/types.js';
 
 describe('createSwarmOrchestrator', () => {
   test('creates an orchestrator with default agents', () => {
@@ -131,14 +132,14 @@ import { unused } from './unused-module';
     const newAgent = {
       id: 'custom-agent',
       role: 'typeAgent' as AgentRole,
-      deps: {} as import('../../src/swarm/types.js').SwarmDeps,
+      deps: {} as SwarmDeps,
       active: true,
     };
     orchestrator.addAgent(newAgent);
     const state = orchestrator.getState();
     expect(state.agentCount.typeAgent).toBe(2);
 
-    orchestrator.removeAgent('typeAgent' as import('../../src/swarm/types.js').AgentRole);
+    orchestrator.removeAgent('typeAgent' as AgentRole);
     const state2 = orchestrator.getState();
     expect(state2.agentCount.typeAgent).toBe(1);
   });

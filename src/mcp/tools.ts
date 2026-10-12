@@ -11,15 +11,9 @@ import * as fs from 'node:fs';
 import * as readline from 'node:readline';
 
 // Import types and modules
-import {
-  MCPServer,
-  MantekaTool,
-  MantekaToolName,
-  QualityGateVerdict,
-  McpServerConfig,
-  resolveSafePath,
-  makeRelativePath,
-} from './types.js';
+// `MCPServer` is a class (value + type) and lives in server.ts, not types.ts.
+import type { MantekaTool, MantekaToolName, OnToolCallListener, QualityGateVerdict, McpServerConfig } from './types.js';
+import { resolveSafePath, makeRelativePath } from './types.js';
 
 // Import Manteka modules
 import { createHealer } from '../healer/index.js';
@@ -27,6 +21,21 @@ import { createLineageStore } from '../memory/lineageStore.js';
 import { createAdaptiveEngine } from '../memory/adaptiveEngine.js';
 import { mutateCode, getQualityVerdict } from '../hooks/mutator.js';
 import { createSwarmOrchestrator } from '../swarm/orchestrator.js';
+import {
+  checkConfigIntegrity,
+  checkFileSystemPermissions,
+  checkLineageIntegrity,
+  checkNodeVersion,
+} from '../core/doctor/checks.js';
+import { runAnalysis, type FileAnalysis } from '../core/analyze/index.js';
+import {
+  assertSliceExportFormat,
+  buildSmartSliceClosure,
+  collectSliceExportModel,
+  formatSliceExport,
+  SMART_SLICE_DEFAULT_DEPTH,
+  type SliceExportFormat,
+} from '../core/smartSlice/index.js';
 
 // ===========================
 // Tool Definitions
@@ -117,21 +126,13 @@ export const manteka_memory_search = async (
   try {
     const memoryStore = createLineageStore({ root: process.cwd() });
 
-    // Store a test record first to ensure store is initialized
-    memoryStore.saveRecord({
-      id: 'temp-' + Date.now(),
-      timestamp: Date.now(),
-      sourceFile: 'test.ts',
-      operation: 'diagnose',
-      description: query,
-      confidence: 0.9,
-    });
-
-    // Search for similar entries
-    const results = memoryStore.recall(query, {
-      topK: limit,
-      includeExpired: false,
-    });
+    // Esta herramienta es de solo lectura: sembrar un registro sintético en cada
+    // llamada contaminaría el almacén de lineage del usuario con basura, así que
+    // se busca únicamente sobre lo que ya está registrado.
+    //
+    // Umbral bajo a propósito: es una búsqueda de recuperación de contexto, donde
+    // un match débil sigue siendo más útil que un conjunto vacío.
+    const results = memoryStore.findSimilar(query, 0.1).slice(0, limit);
 
     if (results.length === 0) {
       return `No memory entries found for query: "${query}" in namespace: ${namespace}`;
@@ -139,9 +140,8 @@ export const manteka_memory_search = async (
 
     // Format results
     const formattedResults = results
-      .slice(0, limit)
       .map(
-        (result: any, index: number) => `
+        (result, index) => `
       ${index + 1}. ${result.description || 'No description'}
          Confidence: ${result.confidence || 0}
          Source: ${result.sourceFile || 'unknown'}
@@ -156,54 +156,274 @@ export const manteka_memory_search = async (
 };
 
 /**
- * manteka_quality_gate: Evalúa mutaciones biológicas sobre diffs locales
+ * manteka_analyze_codebase: Analiza el grafo de dependencias de un códigobase TypeScript/JavaScript
+ *
+ * Realiza un análisis profundo de la estructura de imports/exports en el códigobase,
+ * mapea el grafo de dependencias, calcula métricas de acoplamiento y detecta
+ * ciclos de dependencias. Modo deep para análisis transitivo.
+ *
+ * Parámetros:
+ * - root: Directorio raíz del códigobase para analizar (default: cwd)
+ * - deep: Si true, incluye análisis transitivo de dependencias (default: true)
+ * - output: Formato de salida 'text' o 'json' (default: text)
+ */
+export const manteka_analyze_codebase = async (
+  root: string = process.cwd(),
+  deep: boolean = true,
+  output: 'text' | 'json' = 'text'
+): Promise<string> => {
+  try {
+    const result = runAnalysis(root, deep);
+
+    if (output === 'json') {
+      return JSON.stringify(result, null, 2);
+    }
+
+    // Formatear salida de texto legible
+    const lines: string[] = [];
+
+    // Header
+    lines.push('═'.repeat(60));
+    lines.push(`📊 Manteka Dependency Analysis`);
+    lines.push(`📁 Project: ${result.root}`);
+    lines.push(`📄 Files analyzed: ${result.summary.totalFiles}`);
+    lines.push('═'.repeat(60));
+    lines.push('');
+
+    // Coupling summary
+    lines.push('🔗 Coupling Summary');
+    lines.push(`   Total unique dependencies: ${result.summary.totalUniqueDependencies}`);
+    lines.push(
+      `   Average imports per file: ${result.summary.averageImportsPerFile}`
+    );
+    lines.push('');
+
+    // Import depth
+    lines.push('📏 Import Depth Distribution');
+    lines.push(`   Maximum import depth: ${result.summary.maxImportDepth}`);
+    lines.push('');
+
+    // Circular dependency alerts
+    lines.push('🚨 Circular Dependency Alerts');
+    if (result.summary.filesWithCycles.length > 0) {
+      for (const cycleFile of result.summary.filesWithCycles) {
+        lines.push(`   ⚠ ${cycleFile} - contains circular dependency`);
+      }
+    } else {
+      lines.push('   ✅ No circular dependencies detected');
+    }
+    lines.push('');
+
+    // Per-file details summary
+    lines.push('📋 Files Analysis Summary');
+    lines.push(`   Files with imports: ${result.fileAnalysis.filter((f: FileAnalysis) => f.imports.length > 0).length}/${result.summary.totalFiles}`);
+    lines.push(`   Files with exports: ${result.fileAnalysis.filter((f: FileAnalysis) => f.exports?.length).length}/${result.summary.totalFiles}`);
+    lines.push('');
+
+    lines.push('═'.repeat(60));
+    lines.push(
+      `Analysis complete: ${result.summary.totalFiles} files, ${result.summary.totalUniqueDependencies} unique dependencies`
+    );
+    lines.push('');
+
+    return lines.join('\n');
+  } catch (error) {
+    return `Analysis failed: ${(error as Error).message}`;
+  }
+};
+
+/**
+ * Evaluates the quality gate based on a mutation score and threshold.
+ *
+ * Returns a verdict string indicating whether the quality gate passes or fails.
+ *
+ * @param mutationScore - The mutation score (0-1)
+ * @param threshold - The quality threshold (0-1, default 0.8)
+ * @returns A verdict string with pass/fail status
  */
 export const manteka_quality_gate = async (
   mutationScore: number,
   threshold: number = 0.8
 ): Promise<string> => {
-  try {
-    const verdict = getQualityVerdict(mutationScore, threshold);
+  const verdict = getQualityVerdict(mutationScore, threshold);
 
-    // Also generate a mutation to test reversibility
-    const testCode = `
-function testExample(x: boolean): boolean {
-  if (x) {
-    return true;
-  }
-  return false;
-}
+  return `Verdict: ${verdict}`;
+};
 
-const result = a && b;
-const condition = a || b;
-`;
+/**
+ * manteka_doctor: Diagnostica el entorno del sistema
+ *
+ * Ejecuta un diagnóstico completo del entorno: versión de Node.js,
+ * permisos de archivos, integridad de memoria lineage y configuración.
+ *
+ * @returns Reporte de diagnóstico estructurado
+ */
+export const manteka_doctor = async (): Promise<{
+  nodeVersion: { status: 'ok' | 'warn' | 'fail'; message: string };
+  fileSystemPermissions: { status: 'ok' | 'warn' | 'fail'; message: string };
+  lineageIntegrity: { status: 'ok' | 'warn' | 'fail'; message: string };
+  configIntegrity: { status: 'ok' | 'warn' | 'fail'; message: string };
+  overall: 'healthy' | 'issues';
+}> => {
+  const [nodeResult, fsResult, lineageResult, configResult] = await Promise.all([
+    checkNodeVersion(),
+    checkFileSystemPermissions(),
+    checkLineageIntegrity(),
+    checkConfigIntegrity(),
+  ]);
 
-    const mutationResult = mutateCode(testCode, 'boolean', 0);
+  const overall =
+    nodeResult.status === 'ok' &&
+    fsResult.status === 'ok' &&
+    lineageResult.status === 'ok' &&
+    configResult.status === 'ok'
+      ? 'healthy'
+      : 'issues';
 
-    return `
-Quality Gate Evaluation:
-  Mutation Score: ${mutationScore}
-  Threshold: ${threshold}
-  Verdict: ${verdict}
-
-  Mutation Test:
-    Applied: ${mutationResult.applied}
-    Reversible: ${mutationResult.reversible}
-    Original has true/false patterns for biological mutation testing
-`;
-  } catch (error) {
-    return `Quality gate evaluation failed: ${(error as Error).message}`;
-  }
+  return {
+    nodeVersion: nodeResult,
+    fileSystemPermissions: fsResult,
+    lineageIntegrity: lineageResult,
+    configIntegrity: configResult,
+    overall,
+  };
 };
 
 // ===========================
 // Tool Registration Helper
 // ===========================
 
+/** Descripciones e input schemas de las herramientas Manteka, para clientes MCP. */
+export const MANTEKA_TOOL_SCHEMAS: Record<
+  MantekaToolName,
+  { description: string; inputSchema: { type: 'object'; properties: Record<string, unknown>; required?: string[] } }
+> = {
+  manteka_heal: {
+    description: 'Heals a file with TODO/FIXME diagnostics',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', description: 'Path to file' },
+        description: { type: 'string', description: 'Description of the issue' },
+        maxAttempts: { type: 'number', description: 'Maximum healing attempts' },
+      },
+      required: ['file'],
+    },
+  },
+  manteka_swarm_query: {
+    description: 'Queries the swarm orchestrator',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Query string' },
+        strategy: {
+          type: 'string',
+          enum: ['raft', 'bft', 'gossip', 'crdt', 'quorum'],
+          description: 'Swarm consensus strategy',
+        },
+      },
+      required: ['query'],
+    },
+  },
+  manteka_memory_search: {
+    description: 'Searches memory for patterns',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search query' },
+        namespace: { type: 'string', description: 'Memory namespace' },
+        limit: { type: 'number', description: 'Max results' },
+      },
+      required: ['query'],
+    },
+  },
+  manteka_quality_gate: {
+    description: 'Evaluates quality gate based on mutation score',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        mutationScore: { type: 'number', description: 'Mutation score (0-1)' },
+        threshold: { type: 'number', description: 'Quality threshold (0-1)' },
+      },
+      required: ['mutationScore'],
+    },
+  },
+  manteka_doctor: {
+    description: 'Diagnoses environment health (Node version, fs permissions, lineage, config)',
+    inputSchema: { type: 'object', properties: {} },
+  },
+  manteka_analyze_codebase: {
+    description: 'Analyzes TypeScript/JavaScript project dependency graph',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        root: { type: 'string', description: 'Root directory' },
+        deep: { type: 'boolean', description: 'Deep transitive analysis' },
+        output: { type: 'string', enum: ['text', 'json'], description: 'Output format' },
+      },
+    },
+  },
+  manteka_smart_slice: {
+    description: 'Exports the Smart-Slice dependency closure as RAG-ready markdown, json or xml',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        exportFormat: { type: 'string', enum: ['markdown', 'json', 'xml'], description: 'Export format' },
+        entry: { type: 'string', description: 'Entry point to trace dependencies from' },
+        root: { type: 'string', description: 'Root directory' },
+        depth: { type: 'number', description: 'Maximum dependency depth' },
+      },
+    },
+  },
+};
+
+/**
+ * Superficie mínima que este registro necesita del servidor MCP.
+ *
+ * Se declara estructuralmente (en vez de usar la clase nativa `MCPServer`) para
+ * permitir que otro transporte lo adapte: el servidor del SDK de
+ * Model Context Protocol no implementa `registerToolHandler`, sino `registerTool`.
+ */
+export interface MantekaToolRegistrar {
+  registerToolHandler(name: MantekaToolName, handler: OnToolCallListener): void;
+}
+
+/**
+ * Superficie del `McpServer` del SDK que necesita el adaptador de abajo.
+ *
+ * El SDK declara `registerTool` con genéricos de Zod (`ZodRawShapeCompat | AnySchema`),
+ * así que su firma es incompatible con cualquier tipo estructural. El adaptador llama
+ * a través de un `any` puntual en este único frontera, en lugar de propagar `any`
+ * por el resto del registro.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: unica frontera con la firma generica del SDK de MCP
+export type SdkMcpServerLike = { registerTool: any };
+
+/**
+ * Registra las herramientas Manteka en el `McpServer` del SDK de MCP.
+ *
+ * El SDK no expone `registerToolHandler`, así que cada handler se adapta a la firma
+ * `registerTool` del SDK y su resultado se envuelve en el bloque `content` que el
+ * protocolo espera. Pasar la instancia del SDK directamente a `registerMantekaTools`
+ * lanzaría `TypeError: server.registerToolHandler is not a function`.
+ */
+export const registerMantekaToolsForSdk = (sdkServer: SdkMcpServerLike): void => {
+  registerMantekaTools({
+    registerToolHandler: (name, handler) => {
+      const { description, inputSchema } = MANTEKA_TOOL_SCHEMAS[name];
+      sdkServer.registerTool(name, { description, inputSchema }, async (args: Record<string, unknown>) => {
+        const result = await handler(name, args ?? {});
+        const text = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
+        return { content: [{ type: 'text' as const, text }] };
+      });
+    },
+  });
+};
+
 /**
  * Registers all Manteka tools with the MCP server
  */
-export const registerMantekaTools = (server: MCPServer): void => {
+export const registerMantekaTools = (server: MantekaToolRegistrar): void => {
   // Register manteka_heal handler
   server.registerToolHandler('manteka_heal', async (name: MantekaToolName, args: Record<string, any>) => {
     const file = args?.file || '';
@@ -241,4 +461,55 @@ export const registerMantekaTools = (server: MCPServer): void => {
     const result = await manteka_quality_gate(mutationScore, threshold);
     return result;
   });
+
+  // Register manteka_smart_slice handler
+  server.registerToolHandler('manteka_smart_slice', async (name: MantekaToolName, args: Record<string, any>) => {
+    const exportFormat = args?.exportFormat as SliceExportFormat | undefined;
+    const entry = typeof args?.entry === 'string' ? args.entry : '.';
+    const root = typeof args?.root === 'string' ? args.root : process.cwd();
+    const depth = typeof args?.depth === 'number' ? args.depth : undefined;
+
+    return await manteka_smart_slice(exportFormat, entry, root, depth);
+  });
+
+  // Register manteka_doctor handler
+  server.registerToolHandler('manteka_doctor', async (name: MantekaToolName, args: Record<string, any>) => {
+    const result = await manteka_doctor();
+    return result;
+  });
+
+  // Register manteka_analyze_codebase handler
+  server.registerToolHandler('manteka_analyze_codebase', async (name: MantekaToolName, args: Record<string, any>) => {
+    const root = args?.root || process.cwd();
+    const deep = args?.deep ?? true;
+    const output = args?.output || 'text';
+
+    const result = await manteka_analyze_codebase(root, deep, output);
+    return result;
+  });
+};
+
+/**
+ * manteka_smart_slice: Exporta el cierre de dependencias de Smart-Slice en un
+ * formato listo para contexto RAG.
+ *
+ * Delega el renderizado en `core/smartSlice/export`, la misma fuente de verdad que
+ * usa el subcomando `manteka slice --export`, de modo que la herramienta MCP y la
+ * CLI no puedan divergir en el formato producido.
+ *
+ * @param exportFormat - Formato de salida; si se omite se usa markdown
+ * @param entry - Entry point del slice (default: '.')
+ * @param rootDir - Directorio raíz al que se resuelve el entry
+ * @param depth - Profundidad máxima de dependencia
+ * @returns Contenido renderizado en el formato solicitado
+ */
+export const manteka_smart_slice = async (
+  exportFormat: SliceExportFormat = 'markdown',
+  entry: string = '.',
+  rootDir: string = process.cwd(),
+  depth: number = SMART_SLICE_DEFAULT_DEPTH,
+): Promise<string> => {
+  const closure = await buildSmartSliceClosure({ rootDir: path.resolve(rootDir), entry, depth });
+  const model = await collectSliceExportModel(closure, depth, path.resolve(rootDir));
+  return formatSliceExport(model, assertSliceExportFormat(exportFormat));
 };

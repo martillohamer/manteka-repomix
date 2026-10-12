@@ -16,7 +16,7 @@ import { registerMantekaStoreNoteTool } from './tools/mantekaStoreNoteTool.js';
 import { registerPackCodebaseTool } from './tools/packCodebaseTool.js';
 import { registerPackRemoteRepositoryTool } from './tools/packRemoteRepositoryTool.js';
 import { registerReadRepomixOutputTool } from './tools/readRepomixOutputTool.js';
-import { registerMantekaTools } from './tools.js';
+import { registerMantekaToolsForSdk } from './tools.js';
 
 /**
  * Instructions for the Repomix MCP Server that describe its capabilities and usage
@@ -93,10 +93,17 @@ export const createMcpServer = async (config: McpServerConfig = defaultMcpServer
     registerPackRemoteRepositoryTool(mcpServer);
     registerGenerateSkillTool(mcpServer);
     registerAttachPackedOutputTool(mcpServer);
-  }
 
-  // Register Manteka native tools (always available, stdio-transported)
-  registerMantekaTools(mcpServer);
+    // The Manteka native tools are not root-confined: `manteka_heal` writes to a
+    // caller-supplied path, `manteka_analyze_codebase` walks a caller-supplied root,
+    // and `manteka_memory_search` reads the process cwd's lineage store. Registering
+    // them under --sandbox would hand the agent exactly the unbounded access the
+    // sandbox exists to remove, so they stay non-sandbox only.
+    //
+    // Adapted to the SDK API: this server has no `registerToolHandler`, so passing it
+    // to registerMantekaTools directly would throw a TypeError at startup.
+    registerMantekaToolsForSdk(mcpServer);
+  }
 
   return mcpServer;
 };

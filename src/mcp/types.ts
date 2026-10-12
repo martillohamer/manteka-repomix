@@ -30,8 +30,14 @@ export interface RpcRequest<T = any> {
  * JSON-RPC 2.0 Response message
  */
 export interface RpcResponse<T = any> {
-  /** Matches the id of the corresponding request */
-  id: string | number | null;
+  /**
+   * Matches the id of the corresponding request.
+   *
+   * Optional because a server answers a JSON-RPC *notification* with a body that
+   * carries no id at all; `JSON.stringify` drops an `undefined` id, which is exactly
+   * the shape the spec requires.
+   */
+  id?: string | number | null;
   /** Result of the RPC call (either result or error) */
   result?: T;
   /** Error object if the call failed */
@@ -60,8 +66,9 @@ export interface RpcNotification<T = any> {
  */
 export class JsonRpcError extends Error {
   public code: number;
+  public data: unknown;
 
-  constructor(code: number, message: string, data?: any) {
+  constructor(code: number, message: string, data?: unknown) {
     super(message);
     this.code = code;
     this.name = 'JsonRpcError';
@@ -151,9 +158,14 @@ export interface ToolCallRequest extends RpcRequest {
 
 /**
  * MCP Tool call response
+ *
+ * `result` is optional on purpose: JSON-RPC 2.0 requires a response to carry
+ * *either* `result` *or* `error`, never both. Error paths (unknown tool, invalid
+ * params, handler threw) return `{ id, error }` with no `result` key, so requiring
+ * it here would reject the spec-conformant shape the server actually emits.
  */
 export interface ToolCallResponse extends RpcResponse {
-  result: {
+  result?: {
     /** Tool output text */
     text: string;
   } | {
@@ -206,7 +218,10 @@ export type MantekaToolName =
   | 'manteka_heal'
   | 'manteka_swarm_query'
   | 'manteka_memory_search'
-  | 'manteka_quality_gate';
+  | 'manteka_quality_gate'
+  | 'manteka_doctor'
+  | 'manteka_analyze_codebase'
+  | 'manteka_smart_slice';
 
 /**
  * Manteka tool interface
@@ -352,7 +367,7 @@ export interface OnRequestListener {
  * Emitted when a tool is called
  */
 export interface OnToolCallListener {
-  (toolName: MantekaToolName, arguments: Record<string, any>): Promise<any>;
+  (toolName: MantekaToolName, args: Record<string, any>): Promise<any>;
 }
 
 /**
@@ -367,6 +382,20 @@ export interface OnInitializeListener {
  */
 export interface OnToolsListListener {
   (): Promise<MantekaTool[]>;
+}
+
+/**
+ * Emitted when the list of prompts is requested
+ */
+export interface OnPromptsListListener {
+  (): Promise<MantekaPrompt[]>;
+}
+
+/**
+ * Emitted when the list of resources is requested
+ */
+export interface OnResourcesListListener {
+  (): Promise<MantekaResource[]>;
 }
 
 /**
@@ -399,9 +428,3 @@ export const resolveSafePath = (root: string, input: string): string => {
 export const makeRelativePath = (root: string, filePath: string): string => {
   return path.relative(root, filePath).replace(/\\/g, '/');
 };
-
-// ===========================
-// Exported Types
-// ===========================
-
-export type { JsonRpcError, JsonRpcErrorCodes };

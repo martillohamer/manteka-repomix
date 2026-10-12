@@ -393,7 +393,10 @@ describe('manteka dashboard command', () => {
     );
   });
 
-  it('is registered on the manteka program alongside evolve, status and watch', () => {
-    expect(createMantekaProgram().commands.map((command) => command.name())).toContain('dashboard');
+  it('is registered on the manteka program alongside evolve, status, watch, analyze, inspect and dashboard', () => {
+    const commandNames = createMantekaProgram().commands.map((command) => command.name());
+    expect(commandNames).toEqual(expect.arrayContaining([
+      'evolve', 'status', 'watch', 'analyze', 'inspect', 'dashboard',
+    ]));
   });
 });

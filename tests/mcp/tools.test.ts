@@ -18,7 +18,7 @@ import {
 } from '../../src/mcp/tools.js';
 
 // Import MCP server types
-import { McpServer } from '../../src/mcp/index.js';
+import type { MCPServer } from '../../src/mcp/index.js';
 
 // Mock/Stub helpers for test isolation
 const mockFileContent = `/**
@@ -115,7 +115,7 @@ describe('Phase 14: MCP Tools Integration', () => {
 });
 
 describe('MCP Server Integration', () => {
-  let server: McpServer | null = null;
+  let server: MCPServer | null = null;
 
   beforeEach(() => {
     // Setup: Create a fresh MCP server instance for each test

@@ -26,6 +26,14 @@ test-report.junit.xml
 *.tmp
 *.temp
 
+# Test scratch fixtures written at runtime beside the test sources. These used to be
+# committed by accident (e.g. tests/healer/test-large-diff.ts, a file full of
+# `line0`…`line24`); the tests that created them now write to os.tmpdir() instead.
+tests/**/healer-test-data/
+tests/**/test-*.ts
+tmp/memory-lineage-*-empty/
+tmp/memory-test-empty/
+
 # Repomix output
 repomix-output.txt
 repomix-output.xml

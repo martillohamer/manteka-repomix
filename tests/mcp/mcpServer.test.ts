@@ -184,7 +184,7 @@ describe('MCP Server', () => {
       expect(server).toBeDefined();
     });
 
-    test('registers the 6 packing/analysis tools by default (non-sandboxed)', async () => {
+    test('registers the packing/analysis tools plus the Manteka native tools by default (non-sandboxed)', async () => {
       const server = await createMcpServer();
       const registerTool = (server as unknown as { registerTool: ReturnType<typeof vi.fn> }).registerTool;
       const names = registerTool.mock.calls.map((c) => c[0]);
@@ -202,13 +202,21 @@ describe('MCP Server', () => {
           'manteka_log_history',
           'manteka_analyze_code_health',
           'manteka_semantic_debug',
+          // Manteka native tools, adapted onto the SDK's registerTool API.
+          'manteka_heal',
+          'manteka_swarm_query',
+          'manteka_memory_search',
+          'manteka_quality_gate',
+          'manteka_doctor',
+          'manteka_analyze_codebase',
+          'manteka_smart_slice',
         ]),
       );
       // The raw file tools are sandbox-only: outside --sandbox nothing bounds the
       // paths they accept, so they are not offered at all.
       expect(names).not.toContain('file_system_read_file');
       expect(names).not.toContain('file_system_read_directory');
-      expect(names).toHaveLength(12);
+      expect(names).toHaveLength(19);
     });
 
     test('registers only the 5 read-only tools when sandboxed', async () => {
@@ -233,6 +241,12 @@ describe('MCP Server', () => {
       expect(names).not.toContain('pack_remote_repository');
       expect(names).not.toContain('generate_skill');
       expect(names).not.toContain('attach_packed_output');
+      // The Manteka native tools take caller-supplied paths (heal writes, analyze
+      // walks a root, memory_search reads the cwd lineage store) and are not
+      // root-confined, so they must not be offered inside the sandbox.
+      expect(names).not.toContain('manteka_heal');
+      expect(names).not.toContain('manteka_analyze_codebase');
+      expect(names).not.toContain('manteka_memory_search');
     });
 
     test('sandboxed instructions tell the agent paths are relative to the workspace root', async () => {

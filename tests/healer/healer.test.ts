@@ -13,6 +13,18 @@ const createTestFile = async (dir: string, content: string, name: string): Promi
   return filePath;
 };
 
+/**
+ * Narrows a possibly-null patch while keeping "expected a patch" as the failure
+ * mode, so these tests read as before but typecheck under strict null checks.
+ */
+const expectPatch = (patch: Patch | null): Patch => {
+  expect(patch).not.toBeNull();
+  if (patch === null) {
+    throw new Error('expected scanAndProceed to return a patch');
+  }
+  return patch;
+};
+
 describe('Healer: Daemon Orchestration', () => {
   let healer: ReturnType<typeof createHealer>;
   const testDir = path.join(__dirname, 'healer-test-data');
@@ -52,9 +64,8 @@ describe('Healer: Daemon Orchestration', () => {
 
   test('scanAndProceed with unused marker generates patch', async () => {
     const testFile = await createTestFile(testDir, '// TODO: UNUSED\nconst foo = 1;', 'test-unused.ts');
-    const patch = await healer.scanAndProceed(testFile);
+    const patch = expectPatch(await healer.scanAndProceed(testFile));
 
-    expect(patch).not.toBeNull();
     expect(patch).toHaveProperty('file');
     expect(patch).toHaveProperty('diff');
     expect(patch).toHaveProperty('confidence');
@@ -71,17 +82,15 @@ describe('Healer: Daemon Orchestration', () => {
       '// TODO: fix trailing space const foo = 1; // \nconst bar = 2;',
       'test-whitespace.ts',
     );
-    const patch = await healer.scanAndProceed(testFile);
+    const patch = expectPatch(await healer.scanAndProceed(testFile));
 
-    expect(patch).not.toBeNull();
     expect(patch.confidence).toBeGreaterThan(0.2);
   });
 
   test('scanAndProceed with TODO comment generates patch', async () => {
     const testFile = await createTestFile(testDir, '// TODO: implement feature\nconst foo = 1;', 'test-todo.ts');
-    const patch = await healer.scanAndProceed(testFile);
+    const patch = expectPatch(await healer.scanAndProceed(testFile));
 
-    expect(patch).not.toBeNull();
     expect(patch.confidence).toBeGreaterThan(0.2);
   });
 
@@ -115,7 +124,8 @@ describe('Healer: Daemon Orchestration', () => {
     // We verify by checking that emit is functional
     expect(healer.emit).toBeDefined();
     healer.emit({
-      type: 'test' as const,
+      // 'error' is a real HealerEventType; 'test' was never a member of the union.
+      type: 'error',
       ts: Date.now(),
       details: 'test',
     });
