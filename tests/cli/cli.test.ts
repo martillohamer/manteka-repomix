@@ -11,7 +11,14 @@ import { formatStatus, gatherStatus, type StatusDeps } from '../../src/cli/comma
 import { createMantekaProgram } from '../../src/cli/index.js';
 import { createWatchIgnore, formatWatchCycleReport, startEvolutionWatcher } from '../../src/cli/watcher.js';
 
-// vi.mock('../../src/shared/logger') removed - causing module caching issues
+vi.mock('../../src/shared/logger', () => ({
+  log: vi.fn(),
+  error: vi.fn,
+  warn: vi.fn,
+  info: vi.fn,
+  debug: vi.fn,
+  trace: vi.fn,
+}));
 
 // ---------------------------------------------------------------------------
 // Command parsing
