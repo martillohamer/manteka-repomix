@@ -31,15 +31,21 @@ const runDoctor = async (): Promise<void> => {
   });
 
   const allOk = results.every((result) => result.status === 'ok');
+  // Only a hard failure is non-zero. Warnings (an absent lineage store, an optional
+  // server.json field) are informational and must not make `manteka doctor` unusable
+  // as a CI gate — otherwise every nitpick turns the command red.
+  const hasFailure = results.some((result) => result.status === 'fail');
 
   console.log();
-  if (allOk) {
+  if (hasFailure) {
+    console.log('🔴 One or more checks failed - see above');
+  } else if (allOk) {
     console.log('🟢 All checks passed - environment is healthy');
   } else {
     console.log('🟡 Some checks had warnings - review above');
   }
 
-  if (!allOk) {
+  if (hasFailure) {
     process.exit(1);
   }
 };

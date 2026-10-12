@@ -19,10 +19,11 @@ import type { MCPServer } from '../mcp/server.js';
 import { registerMantekaTools } from '../mcp/tools.js';
 import { getVersion } from '../core/file/packageJsonParse.js';
 import { handleError } from '../shared/errorHandle.js';
-import { registerMcpInspectCommand } from './commands/mcpInspect.js';
+import { registerMcpInspectCommand, runInspectCommand } from './commands/mcpInspect.js';
 import { registerDashboardCommand } from './commands/dashboardCommand.js';
+import { runDoctor as runDoctorChecksReport } from './commands/doctor.js';
 import { registerDoctorCommand } from './commands/doctor.js';
-import { registerSliceCommand } from './commands/slice.js';
+import { registerSliceCommand, runSliceCommand } from './commands/slice.js';
 import { registerEvolveCommand } from './commands/evolveCommand.js';
 import { registerAnalyzeCommand, runAnalyzeCommand } from './commands/analyzeCommand.js';
 import { registerStatusCommand } from './commands/statusCommand.js';
@@ -79,94 +80,15 @@ const startMcpserver = async (): Promise<void> => {
 };
 
 /**
- * Runs the doctor command - health check of all subsystems
+ * Runs the doctor command - environment health check.
+ *
+ * Delegates to `commands/doctor`, which owns the diagnostics in `core/doctor/checks`.
+ * This file used to carry a second, older implementation that reported per-subsystem
+ * status; keeping both meant the binary and the Commander program disagreed about what
+ * `manteka doctor` does.
  */
 const runDoctor = async (): Promise<void> => {
-  try {
-    console.log('=== Manteka Subsystem Health Check ===\n');
-
-    // Check Healer
-    console.log('--- Healer Subsystem ---');
-    try {
-      const { createHealer } = await import('../healer/index.js');
-      const healer = createHealer({ root: process.cwd(), dryRun: true, maxAttempts: 1 });
-      console.log('  Status: ✅ Operational');
-      console.log('  Max attempts: 3 (default)');
-      console.log('  Dry-run mode: enabled');
-    } catch (error) {
-      console.log('  Status: ❌ Error');
-      console.log(`  Error: ${(error as Error).message}`);
-    }
-
-    // Check Swarm
-    console.log('\n--- Swarm Subsystem ---');
-    try {
-      const { createSwarmOrchestrator } = await import('../swarm/orchestrator.js');
-      const orchestrator = createSwarmOrchestrator({});
-      console.log('  Status: ✅ Operational');
-      console.log('  Agent roles available');
-    } catch (error) {
-      console.log('  Status: ❌ Error');
-      console.log(`  Error: ${(error as Error).message}`);
-    }
-
-    // Check Memory
-    console.log('\n--- Memory Subsystem ---');
-    try {
-      const { createLineageStore } = await import('../memory/lineageStore.js');
-      const memoryStore = createLineageStore({ root: process.cwd() });
-      const stats = memoryStore.getStats();
-      console.log('  Status: ✅ Operational');
-      console.log(`  Entry count: ${stats.totalVectors}`);
-      console.log(`  Dimensions: ${stats.dimension}`);
-    } catch (error) {
-      console.log('  Status: ❌ Error');
-      console.log(`  Error: ${(error as Error).message}`);
-    }
-
-    // Check Hooks/Biological Mutator
-    console.log('\n--- Hooks / Biological Mutator Subsystem ---');
-    try {
-      const { mutateCode, getQualityVerdict } = await import('../hooks/mutator.js');
-      const testCode = `
-function testExample(x: boolean): boolean {
-  if (x) {
-    return true;
-  }
-  return false;
-}
-const result = a && b;
-const condition = a || b;
-const isValid = !true;
-`;
-      const mutationResult = mutateCode(testCode, 'boolean', 0);
-      const verdict = getQualityVerdict(0.85, 0.8);
-      console.log('  Status: ✅ Operational');
-      console.log(`  Mutations applicable: ${mutationResult.applied}`);
-      console.log(`  Mutations reversible: ${mutationResult.reversible}`);
-      console.log(`  Quality gate verdict: ${verdict}`);
-    } catch (error) {
-      console.log('  Status: ❌ Error');
-      console.log(`  Error: ${(error as Error).message}`);
-    }
-
-    // Check MCP Server
-    console.log('\n--- MCP Server Subsystem ---');
-    if (mcpServer) {
-      console.log('  Status: ✅ Running');
-      console.log('  Server name: manteka-repomix-mcp');
-      console.log('  Server version: await getVersion()');
-      console.log('  Tools registered: 4 (manteka_heal, manteka_swarm_query, manteka_memory_search, manteka_quality_gate)');
-    } else {
-      console.log('  Status: ⏸️  Not started');
-      console.log('  Run "manteka serve" to start the MCP server');
-    }
-
-    console.log('\n=== All Subsystem Checks Complete ===');
-  } catch (error) {
-    handleError(error);
-    process.exit(1);
-  }
+  await runDoctorChecksReport();
 };
 
 /**
@@ -227,8 +149,10 @@ const main = async (): Promise<void> => {
       await runAnalyzeCommand(args);
       break;
     case 'inspect':
-      console.log('manteka mcp inspect command is available');
-      console.log('Usage: manteka mcp inspect --json');
+      runInspectCommand(args);
+      break;
+    case 'slice':
+      await runSliceCommand(args);
       break;
     case 'dashboard':
       // TODO: Implement dashboard command start
@@ -252,22 +176,25 @@ const showHelp = (): void => {
   console.log('Usage: manteka <command>');
   console.log('');
   console.log('Commands:');
-  console.log('  serve    Start MCP Stdio server transport');
-  console.log('  doctor   Health check of all subsystems (Healer, Swarm, Memory, Hooks)');
-  console.log('  version  Show version information');
-  console.log('  analyze  Analyze TypeScript/JavaScript project dependency graph');
-  console.log('  inspect  Inspect MCP registered tools');
-  console.log('  dashboard  Serve the biometric web dashboard');
+  console.log('  serve      Start MCP Stdio server transport');
+  console.log('  doctor     Diagnose environment health (Node.js, fs permissions, lineage, config)');
+  console.log('  version    Show version information');
+  console.log('  analyze    Analyze the dependency graph (add --deep for transitive expansion)');
+  console.log('  inspect    Inspect the registered MCP tools (add --json for machine output)');
+  console.log('  slice      Export the Smart-Slice closure for RAG (--export markdown|json|xml)');
+  console.log('  dashboard  Serve the biometric web dashboard (not implemented yet)');
   console.log('');
   console.log('Examples:');
-  console.log('  manteka serve');
   console.log('  manteka doctor');
-  console.log('  manteka version');
+  console.log('  manteka analyze . --deep');
+  console.log('  manteka inspect --json');
+  console.log('  manteka slice src/index.ts --export markdown');
+  console.log('  manteka serve');
   console.log('');
   console.log('MCP Integration:');
   console.log('  Send JSON-RPC 2.0 messages via stdin');
   console.log('  Read responses via stdout');
-  console.log('  Available tools: manteka_heal, manteka_swarm_query, manteka_memory_search, manteka_quality_gate');
+  console.log('  Run "manteka inspect" to list every registered tool');
 };
 
 /**

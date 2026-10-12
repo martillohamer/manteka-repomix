@@ -66,7 +66,7 @@ function getToolParameters(name: string): Record<string, string> {
 }
 
 /**
- * Print tool summary in formatted text
+ * Renders the MCP tool registry as text.
  */
 function printToolSummary(): void {
   console.log('🔍 Manteka MCP Tools Inspection');
@@ -84,7 +84,45 @@ function printToolSummary(): void {
   });
 
   console.log();
-  console.log('Usage: manteka mcp inspect --json');
+  console.log('Usage: manteka inspect --json');
+}
+
+/**
+ * Snapshot of the registry, exposed for tests and for callers embedding the CLI.
+ */
+export const listMcpTools = (): Array<{
+  name: string;
+  description: string;
+  parameters: Record<string, string>;
+}> =>
+  Object.keys(MCP_TOOLS_INFO).map((name) => ({
+    name,
+    description: getToolDescription(name),
+    parameters: getToolParameters(name),
+  }));
+
+/**
+ * Imprime el registro de herramientas, en texto o como JSON.
+ *
+ * Compartido por la ruta de Commander y por el dispatcher `main()`, para que ambas
+ * muestren exactamente la misma salida.
+ */
+export function printMcpInspection(asJson: boolean): void {
+  if (asJson) {
+    console.log(JSON.stringify(listMcpTools(), null, 2));
+  } else {
+    printToolSummary();
+  }
+}
+
+/**
+ * Punto de entrada para el dispatcher legacy `main()`.
+ *
+ * `src/cli/index.ts` despacha `manteka inspect` por su propio switch en lugar de por
+ * Commander, así que aquí se reconstruyen los argumentos crudos.
+ */
+export function runInspectCommand(args: string[]): void {
+  printMcpInspection(args.includes('--json'));
 }
 
 /**
@@ -97,17 +135,7 @@ export function registerMcpInspectCommand(program: Command): void {
     .command('inspect')
     .description('Inspect MCP registered tools')
     .option('--json', 'Output as JSON')
-    .action((_options: { json: boolean }) => {
-      const tools = Object.keys(MCP_TOOLS_INFO).map((name) => ({
-        name,
-        description: getToolDescription(name),
-        parameters: getToolParameters(name),
-      }));
-
-      if (_options.json) {
-        console.log(JSON.stringify(tools, null, 2));
-      } else {
-        printToolSummary();
-      }
+    .action((options: { json?: boolean }) => {
+      printMcpInspection(options.json === true);
     });
 }

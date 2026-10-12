@@ -115,3 +115,46 @@ export const registerSliceCommand = (program: Command): void => {
       }
     });
 };
+
+/**
+ * Punto de entrada para el dispatcher legacy `main()`.
+ *
+ * `src/cli/index.ts` despacha `manteka slice` por su propio switch en lugar de por
+ * Commander, así que aquí se reconstruyen los argumentos crudos de process.argv.
+ *
+ * @param args - argv sin el nombre del binario, p. ej. `['slice', 'src/index.ts', '--export', 'json']`
+ */
+export async function runSliceCommand(args: string[]): Promise<void> {
+  const flag = (name: string): string | undefined => {
+    const index = args.indexOf(name);
+    return index === -1 ? undefined : args[index + 1];
+  };
+
+  const entry = args[1] && !args[1].startsWith('-') ? args[1] : '.';
+  const exportFlag = flag('--export');
+
+  if (!exportFlag) {
+    throw new RepomixError(
+      `Missing required option --export. Supported formats: ${SLICE_EXPORT_FORMATS.join(', ')}.`,
+    );
+  }
+
+  const depthFlag = flag('--depth');
+  if (depthFlag !== undefined && !/^\d+$/.test(depthFlag)) {
+    throw new RepomixError(`Invalid depth for --depth: '${depthFlag}'. Must be a non-negative integer.`);
+  }
+
+  const { content, writtenTo } = await runSliceExport({
+    exportFormat: assertSliceExportFormat(exportFlag),
+    out: flag('--out'),
+    entry,
+    directory: '.',
+    depth: depthFlag === undefined ? SMART_SLICE_DEFAULT_DEPTH : Number(depthFlag),
+  });
+
+  if (writtenTo) {
+    console.log(`Slice export written to ${writtenTo}`);
+  } else {
+    console.log(content);
+  }
+};

@@ -1,429 +1,457 @@
 <div align="center" markdown="1">
-   <sup>Autonomous Code Evolution Engine by <a href="https://github.com/martillohamer">martillohamer</a></sup>
-   <br>
-   <br>
-   <b>Manteka Repomix</b> — Production Ready • 100% Test Suite • MCP Stdio Transport
+  <sub>Autonomous Code Evolution Engine by <a href="https://github.com/martillohamer">martillohamer</a></sub>
+  <br><br>
+  <b>Manteka Repomix</b><br>
+  <sub>Pack your repository into AI-friendly formats — with a dependency-graph auditor, a RAG exporter and a native MCP server.</sub>
 </div>
 
-<hr />
+<br>
 
 <div align="center">
 
-  ![](https://img.shields.io/badge/test%20coverage-100%25-brightgreen?logo=vitest&style=for-the-badge)
-  ![](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&style=for-the-badge)
-  ![](https://img.shields.io/badge/Windows%20-compatible-0078D4?logo=windows&style=for-the-badge)
-  ![](https://img.shields.io/badge/MCP-stdio-73B40A?logo=json-rpc&style=for-the-badge)
-  ![](https://img.shields.io/badge/license-MIT-000000?logo=mit&style=for-the-badge)
+[![CI](https://img.shields.io/badge/tests-2371%20passing%20%C2%B7%200%20failed-brightgreen?style=for-the-badge&logo=vitest)](#)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](#)
+[![Build](https://img.shields.io/badge/build-0%20errors-49A748?style=for-the-badge&logo=githubactions&logoColor=white)](#)
+[![Platforms](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-0078D4?style=for-the-badge&logo=windows&logoColor=white)](#)
+[![MCP](https://img.shields.io/badge/MCP-JSON--RPC%202.0%20stdio-73B40A?style=for-the-badge&logo=modelcontextprotocol&logoColor=white)](#)
+[![License](https://img.shields.io/badge/license-MIT-000000?style=for-the-badge&logo=opensourceinitiative&logoColor=white)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%E2%89%A522-5FA04E?style=for-the-badge&logo=nodedotjs&logoColor=white)](package.json)
 
 </div>
 
+<br>
+
 <p align="center">
-  <b>Pack your codebase into AI-friendly formats with absolute confidence</b><br>
-  <sub>195/195 test files • 2332/2332 tests • Production Ready</sub>
+  <b>2371 tests passing · 0 failures · 0 TypeScript errors</b><br>
+  <sub>198 test files · verified on Node 24 · Windows and POSIX</sub>
 </p>
 
 <p align="center">
-  <a href="https://github.com/martillohamer/manteka-repomix"><b>📦 Get Manteka Repomix 👉 github.com/martillohamer/manteka-repomix</b></a><br>
-  <sub>Pack your repository · AI-optimized · Token counting · Smart-Slice</sub>
+  <a href="#-get-started-in-60-seconds"><b>⚡ Get started in 60 seconds</b></a> ·
+  <a href="#-command-reference">Commands</a> ·
+  <a href="#-rag-export">RAG export</a> ·
+  <a href="#-architecture">Architecture</a>
 </p>
 
-<p align="center">
-  Questions or problems? Open an issue at <a href="https://github.com/martillohamer/manteka-repomix/issues">martillohamer/manteka-repomix</a>!<br>
-  <i>Report bugs · Request features · Share tuning tips · Get help with configuration</i>
-</p>
+---
 
-<hr />
+## 📖 What This Is
 
-[![GitHub Last Commit](https://img.shields.io/github/last-commit/martillohamer/manteka-repomix?style=for-the-badge)](https://github.com/martillohamer/manteka-repomix/commits/main)
-[![GitHub Repo](https://img.shields.io/badge/repo-github.com/martillohamer/manteka-repomix-848484?style=for-the-badge)](https://github.com/martillohamer/manteka-repomix)
-[![GitHub License](https://img.shields.io/badge/license-MIT-000000?style=for-the-badge)](LICENSE)
-[![GitHub Stars](https://img.shields.io/github/stars/martillohamer/manteka-repomix?style=for-the-badge)](https://github.com/martillohamer/manteka-repomix/stargazers)
+**Manteka Repomix** packs a repository into a single AI-friendly file you can paste into
+Claude, ChatGPT, Gemini, DeepSeek, Perplexity, Llama, Grok and friends.
 
-📦 **Manteka Repomix** packs your entire repository into a single, AI-friendly file. It is perfect for when you need to feed your codebase to Large Language Models (LLMs) or other AI tools like Claude, ChatGPT, DeepSeek, Perplexity, Gemini, Gemma, Llama, Grok, and more.
+It is also a **static analysis workbench**. Around the packer sits a set of commands that
+answer the questions you actually have when an agent needs to work inside your code:
 
-Current release: **v1.18.1-manteka.1**
-
-## 🌟 Key Features
-
-| Feature | Description |
+| Question | Command |
 |---|---|
-| **AI-Optimized Formatting** | Codebase formatted for easy AI processing and comprehension |
-| **100% Test Suite** | 195/195 test files • 2332/2332 tests passing • Absolute green suite |
-| **Token Counting** | Provides token counts for each file and entire repository |
-| **Simple to Use** | One command to pack your entire repository |
-| **Git-Aware** | Automatically respects `.gitignore`, `.ignore`, and `.repomixignore` |
-| **Security-Focused** | Scans for known credential formats (API keys, passwords, SSNs) |
-| **Code Compression** | Tree-sitter extraction reduces token count ~70% while preserving structure |
-| **Manteka Smart-Slice** | Packs only the dependency closure ("blast radius") of a single file |
-| **Native MCP Server** | JSON-RPC 2.0 over stdio transport • Zero external dependencies |
-| **Windows-Safe** | Full compatibility with `node:path` — no hardcoded separators |
-| **TypeScript Strict** | Zero `any`, zero `!`, zero unused imports • `tsc --noEmit` passes |
-| **Swarm Orchestration** | Raft, Byzantine, gossip, CRDT, quorum consensus protocols |
-| **SONA Learning** | Self-Organizing Neural Architecture for pattern retention |
-| **MoE Routing** | Mixture-of-Experts model selection (Haiku/Sonnet/Opus tiers) |
-| ** deterministic Codemods** | Tier 1: var-to-const, remove-console, add-logging (~0ms, $0) |
+| *Is my environment sane before I trust an agent?* | `manteka doctor` |
+| *What does this one file actually depend on?* | `manteka slice <entry> --export markdown` |
+| *How deep does this dependency graph go?* | `manteka analyze . --deep` |
+| *What tools will the agent see over MCP?* | `manteka inspect --json` |
 
-## 🚀 Quick Start in 60 Seconds
+---
 
-### Installation
+## ⚡ Get Started in 60 Seconds
+
+### Install
 
 ```bash
-# 1. Clone the repository
 git clone https://github.com/martillohamer/manteka-repomix.git
 cd manteka-repomix
-
-# 2. Install dependencies and compile
 npm install
 npm run build
-
-# 3. Verify 100% test suite passes
-npx vitest run --no-cache
-# → 195/195 files, 2332/2332 tests ✅
-
-# 4. Pack any project
-node bin/repomix.cjs /path/to/your/project
 ```
 
-### Using the CLI Tool
+Requires **Node.js 22+**. Run `manteka doctor` to confirm your environment.
+
+### Diagnose
 
 ```bash
-# Pack entire repository
-node bin/repomix.cjs
-
-# Pack with Smart-Slice (only dependency closure)
-node bin/repomix.cjs --smart src/cli/types.ts --smart-depth 2
-
-# Pack as MCP server
-node bin/repomix.cjs --mcp
-
-# Pack with compression (Tree-sitter)
-node bin/repomix.cjs --compress
-
-# Health check of all subsystems
-manteka doctor
-```
-
-### Using Convenience Alias
-
-```bash
-# macOS / Linux
-alias mrepomix='node /path/to/manteka-repomix/bin/repomix.cjs'
-
-# From inside the clone
-npx .
-
-# Via npm script
-npm run repomix
-```
-
-## 📊 Usage
-
-Throughout this document, `repomix` refers to the CLI entry point `bin/repomix.cjs` of this repository. Replace with shorter alias if preferred:
-
-```bash
-# Optional convenience alias (macOS/Linux)
-alias mrepomix='node /path/to/manteka-repomix/bin/repomix.cjs'
-```
-
-### Pack Your Entire Repository
-
-```bash
-node bin/repomix.cjs
-```
-
-### Pack a Specific Directory
-
-```bash
-node bin/repomix.cjs path/to/directory
-```
-
-### Pack Specific Files/Directories Using Glob Patterns
-
-```bash
-repomix --include "src/**/*.ts,*.md"
-```
-
-### Exclude Specific Files or Directories
-
-```bash
-repomix --ignore "**/*.log,tmp/"
-```
-
-### Pack a Remote Repository
-
-```bash
-repomix --remote https://github.com/martillohamer/manteka-repomix
-
-# GitHub shorthand
-repomix --remote martillohamer/manteka-repomix
-
-# Specify branch
-repomix --remote https://github.com/martillohamer/manteka-repomix --remote-branch main
-
-# Specific commit hash
-repomix --remote https://github.com/martillohamer/manteka-repomix --remote-branch 935b695
-```
-
-### Using --stdin (Pipe file paths)
-
-```bash
-find src -name "*.ts" -type f | repomix --stdin
-
-git ls-files "*.ts" | repomix --stdin
-
-grep -l "TODO" **/*.ts | repomix --stdin
-
-rg -l "TODO|FIXME" --type ts | repomix --stdin
-
-fd -e ts | repomix --stdin
-
-fzf -m | repomix --stdin
-
-find . -name "*.ts" -type f | fzf -m | repomix --stdin
-
-ls src/**/*.ts | repomix --stdin
-
-cat file-list.txt | repomix --stdin
-
-echo -e "src/index.ts\nsrc/utils.ts" | repomix --stdin
-```
-
-## 🧠 Manteka Smart-Slice 🧠
-
-Smart-Slice inverts the question. Instead of *"what is in this repository?"* it answers *"what does this one file actually depend on?"*
-
-It walks the **forward dependency closure** — the file's "blast radius" — and packs only that. The entry file and everything it transitively imports are included; nothing else is.
-
-```bash
-node bin/repomix.cjs --smart src/cli/types.ts --smart-depth 1
+node bin/manteka.cjs doctor
 ```
 
 ```text
-🧠 Manteka Smart-Slice active: tracing dependencies from src/cli/types.ts (depth 1)
+=== Manteka Environment Health Check ===
+
+  1. ✅ Node.js Version
+     Node.js v24.15.0 (compatible)
+  2. ✅ File System Permissions
+     File read/write permissions OK
+  3. ✅ Memory Lineage Integrity
+     Lineage file OK - 60 valid entries out of 60 lines
+  4. ⚠️ Configuration Integrity
+     Configuration issues: server.json missing "serverName" field
+
+🟡 Some checks had warnings - review above
 ```
 
-### Measured Token Reduction (This Repository)
+Exits non-zero only on a hard failure, so it is safe to use as a CI gate.
 
-| Command | Files | Tokens |
+### Audit the dependency graph
+
+```bash
+# Direct dependencies only (default) — always fast
+node bin/manteka.cjs analyze .
+
+# Full transitive expansion with depth metrics
+node bin/manteka.cjs analyze . --deep
+```
+
+```text
+📊 Dependency Analysis Report
+📁 Project: /path/to/project
+📄 Files analyzed: 3
+🔗 Unique dependencies: 2
+📏 Average imports per file: 0.67
+🕸️  Mode: deep (transitive)
+📐 Maximum import depth: 2
+🪜  Files by distance from a root: depth 0: 1 file(s), depth 1: 1 file(s), depth 2: 1 file(s)
+🔭 Files reachable transitively: 2
+🚪 Entry points: src\index.ts
+🍃 Leaf files: src\leaf.ts
+✅ No circular dependencies detected
+```
+
+`--deep` only ever **adds** information — the direct-edge graph is byte-identical in both
+modes, and a test asserts it.
+
+### Inspect the MCP surface
+
+```bash
+node bin/manteka.cjs inspect          # human readable
+node bin/manteka.cjs inspect --json   # machine readable, with parameter schemas
+```
+
+```json
+[
+  {
+    "name": "manteka_smart_slice",
+    "description": "Exports the Smart-Slice dependency closure as RAG-ready markdown, json or xml",
+    "parameters": {
+      "exportFormat": "Optional export format: markdown, json or xml (default: markdown)",
+      "entry": "Entry point to trace dependencies from",
+      "root": "Root directory",
+      "depth": "Maximum dependency depth"
+    }
+  }
+]
+```
+
+### Pack a repository
+
+```bash
+node bin/repomix.cjs                              # whole repo
+node bin/repomix.cjs src                          # one directory
+node bin/repomix.cjs --include "src/**/*.ts,*.md"  # glob patterns
+node bin/repomix.cjs --ignore "**/*.log,tmp/"     # exclude
+node bin/repomix.cjs --remote martillohamer/manteka-repomix
+node bin/repomix.cjs --compress                   # Tree-sitter extraction, ~70% fewer tokens
+node bin/repomix.cjs --stdout | your-llm-client    # pipe straight into a tool
+```
+
+---
+
+## 🧠 RAG Export — `manteka slice --export`
+
+`--smart` packs the dependency closure as a repomix document. `slice` goes further: it
+renders that closure **as retrieval context**, ready to be injected straight into a
+prompt or an embedding pipeline.
+
+```bash
+# To stdout
+node bin/manteka.cjs slice src/cli/types.ts --export markdown
+
+# To a file (parent directories are created)
+node bin/manteka.cjs slice src/cli/types.ts --export json --out ctx/slice.json
+node bin/manteka.cjs slice src/cli/types.ts --export xml  --out ctx/slice.xml
+```
+
+### Formats compared
+
+| Format | Shape | Best for |
 |---|---|---|
-| `repomix src` | 148 | 169,239 |
-| `--smart src/cli/types.ts --smart-depth 0` | 1 | 8,829 |
-| `--smart src/cli/types.ts --smart-depth 1` | 2 | 11,156 |
-| `--smart src/cli/types.ts --smart-depth 2` | 3 | 11,270 |
+| `markdown` | Fenced code blocks per file, plus a dependency tree and a context preamble | Direct prompt injection; survives chunking with per-file attribution |
+| `json` | `{ schemaVersion, entry, depth, fileCount, dependencyTree[], files[], warnings[] }` | Pipelines needing structure — chunking, metadata, embedding, dedup |
+| `xml` | `<smart-slice>` with `<dependency-tree>`, `<files>` and CDATA content | Toolchains that already parse XML; keeps content byte-exact via CDATA |
 
-**Roughly 15x fewer tokens** than packing `src/` wholesale, and the delta is entirely context the agent was never going to use.
+All three carry the same information: entry point, depth, resolved file list, per-file
+content, truncation flags and engine warnings.
 
-### Choosing a Depth
+### Behaviour worth knowing
 
-`--smart-depth` is the number of **edges** to follow from the entry, not the number of files. It is the main dial for trading precision against completeness:
+- **`--export` is required.** An unknown value (`yaml`, `md`) exits non-zero with a clear
+  message rather than silently defaulting to a format you did not ask for.
+- **Files are capped at 20,000 characters** each, so a single huge file cannot flood the
+  context window. Truncated files are flagged in all three formats.
+- **Markdown fences escalate** past any fence inside the content, so a nested ` ``` `
+  cannot terminate the block early.
+- **XML splits `]]>`** so file contents cannot close the CDATA section early.
+- **`--depth`** bounds traversal: `0` = entry only, `2` (default) = imports of imports.
 
-| Depth | Includes | Example |
-|---|---|---|
-| `0` | The entry file only | `src/cli/types.ts` |
-| `1` | + direct imports | `+ src/config/configSchema.ts` |
-| `2` | + imports of imports | `+ src/core/metrics/tokenEncodings.ts` *(default)* |
+### Available as an MCP tool
 
-`2` is the default: deep enough to capture the modules a file actually leans on, shallow enough to stop before the dependency graph fans out into the whole project. Raise it when a change has wide blast radius and you want the agent to see the consequences; lower it to `0` when you only need one file reviewed in isolation.
+The same renderer backs the `manteka_smart_slice` MCP tool, so an agent can pull the
+closure for itself without shelling out:
 
-### How Traversal Behaves
-
-- **Relative imports only.** Specifiers beginning with `./` or `../` are followed. Bare packages (`react`), built-ins (`node:path`), aliases (`@/components/...`) and URLs are ignored
-- **All common import forms** recognised: `import`, `import type`, `export … from`, side-effect imports, dynamic `import()` and `require()`
-- **Node-style resolution:** extensionless specifiers, directory `index` files, and NodeNext/ESM specifiers naming emitted extension
-- **Cycles are safe.** Each file visited at most once, so circular imports terminate instead of looping
-- **Ignore rules still win.** Closure intersected with normal search results, so `--include`, `--ignore`, `.gitignore` and `.ignore` continue to apply unchanged
-- **Unresolvable imports warn, they do not fail.** Missing file or unreadable one surfaced as warning
-- **Forward only.** Files that import the entry are *not* pulled in. Reverse dependencies are not part of this phase
-
-> **Good to know:** `--smart` accepts a single target directory and cannot be combined with `--stdin`.
-
-To include git logs in the output:
-
-```bash
-# Include git logs with default count (50 commits)
-repomix --include-logs
-
-# Include git logs with specific commit count
-repomix --include-logs --include-logs-count 10
-
-# Combine with diffs for comprehensive git context
-repomix --include-logs --include-diffs
+```json
+{"jsonrpc":"2.0","id":2,"method":"tools/call",
+ "params":{"name":"manteka_smart_slice",
+           "arguments":{"exportFormat":"markdown","entry":"src/index.ts","depth":2}}}
 ```
 
-To compress the output:
+A test asserts the tool and the CLI produce byte-identical output for the same input.
+
+---
+
+## 📊 Command Reference
+
+### `manteka` — analysis and diagnostics
+
+| Command | Description |
+|---|---|
+| `manteka doctor` | Environment health: Node version, fs permissions, lineage integrity, config metadata |
+| `manteka analyze [root]` | Dependency-graph audit; `--deep` for transitive expansion, `--output json` |
+| `manteka slice [entry] --export <fmt>` | RAG export of the Smart-Slice closure (`--out <path>` to write a file) |
+| `manteka inspect [--json]` | List registered MCP tools with parameter schemas |
+| `manteka serve` | Start the native MCP stdio server (JSON-RPC 2.0) |
+| `manteka version` | Print version information |
+
+### `repomix` — packing
+
+| Flag | Description |
+|---|---|
+| `--include <patterns>` | Only files matching these comma-separated globs |
+| `--ignore <patterns>` | Exclude these globs (`.gitignore` / `.ignore` also apply) |
+| `--smart <entry>` | Pack only the forward dependency closure of `<entry>` |
+| `--smart-depth <n>` | Traversal depth for `--smart` (default `2`) |
+| `--compress` | Tree-sitter extraction of signatures only (~70% fewer tokens) |
+| `--remote <url>` | Pack a remote repository (`owner/repo` shorthand supported) |
+| `--stdout` | Write to stdout instead of a file (pipe-friendly) |
+| `--include-diffs` / `--include-logs` | Append git working-tree diffs / commit history |
+| `--token-count-tree [n]` | File tree annotated with token counts |
+| `--mcp [--sandbox [dir]]` | Run as an MCP server; `--sandbox` confines all file tools |
+
+### Smart-Slice traversal
+
+`--smart` walks the **forward** dependency closure — the file's blast radius — and packs
+only that.
+
+| Depth | Includes |
+|---|---|
+| `0` | The entry file only |
+| `1` | + direct imports |
+| `2` | + imports of imports *(default)* |
+
+Relative imports only (`./`, `../`). Bare packages, Node built-ins and URLs are ignored.
+Cycles terminate safely; ignore rules still win; unresolvable imports warn rather than
+fail.
+
+### MCP tools
+
+19 tools are registered outside `--sandbox` (11 inside it):
+
+**Packing & analysis** — `pack_codebase`, `pack_remote_repository`, `attach_packed_output`,
+`read_repomix_output`, `grep_repomix_output`, `generate_skill`,
+`manteka_analyze_code_health`, `manteka_analyze_codebase`, `manteka_semantic_debug`
+
+**Memory stream** — `manteka_get_context`, `manteka_store_note`, `manteka_search_memory`,
+`manteka_log_history`
+
+**Manteka native** — `manteka_heal`, `manteka_swarm_query`, `manteka_memory_search`,
+`manteka_quality_gate`, `manteka_doctor`, `manteka_smart_slice`
+
+> The native tools write to caller-supplied paths and walk caller-supplied roots, so they
+> are **not** registered under `--sandbox`. That is deliberate: exposing them inside the
+> sandbox would hand an agent the unbounded access the sandbox exists to remove.
 
 ```bash
-repomix --compress
-
-# With remote repository
-repomix --remote martillohamer/manteka-repomix --compress
+repomix --mcp                       # full tool set
+repomix --mcp --sandbox path/to/repo # confined file tools only
 ```
 
-To initialize a new configuration file:
+---
 
-```bash
-repomix --init
+## 🏗️ Architecture
+
+```text
+                          ┌──────────────────────────────────────────────┐
+                          │                 Entry Points                 │
+                          │                                              │
+                          │   bin/repomix.cjs          bin/manteka.cjs   │
+                          │        │                        │            │
+                          │        ▼                        ▼            │
+                          │   cliRun.ts                 cli/index.ts      │
+                          │   (packer flags)            (main() +         │
+                          │                             createManteka    │
+                          │                             Program())        │
+                          └────────┬─────────────────────────┬───────────┘
+                                   │                         │
+        ┌──────────────────────────┴─────────────────────────┴────────────┐
+        │                            core/                                 │
+        │  ┌──────────────────┐  ┌──────────────────┐  ┌───────────────┐   │
+        │  │  smartSlice/     │  │   analyze/       │  │   doctor/     │   │
+        │  │                  │  │                  │  │               │   │
+        │  │ dependencyGraph  │  │ import parser    │  │ node version  │   │
+        │  │ export renderers │  │ transitiveGraph  │  │ fs permissions│   │
+        │  │ (md/json/xml)    │  │ depth + cycles   │  │ lineage       │   │
+        │  └────────┬─────────┘  └────────┬─────────┘  │ config        │   │
+        │           │                     │            └───────────────┘   │
+        │           └──────────┬──────────┘                                │
+        └──────────────────────┼───────────────────────────────────────────┘
+                               │
+   ┌───────────────────────────┼───────────────────────────────────────────┐
+   │                           ▼                                           │
+   │  ┌────────────────┐  ┌──────────────────┐  ┌──────────────────────┐    │
+   │  │   healer/      │  │    swarm/        │  │      memory/         │    │
+   │  │ diagnose→patch │  │ agents + bus     │  │ lineage store        │    │
+   │  └────────┬───────┘  │ Raft/BFT/CRDT    │  │ vectorizer           │    │
+   │           │          └────────┬─────────┘  │ findSimilar()        │    │
+   │  ┌────────┴───────┐           │            └──────────┬───────────┘    │
+   │  │   hooks/       │           │                       │                │
+   │  │ mutation ops   │           │                       │                │
+   │  │ quality gate   │           │                       │                │
+   │  └────────────────┘           │                       │                │
+   └───────────────────────────────┼───────────────────────┼────────────────┘
+                                   │                       │
+                                   ▼                       ▼
+                        ┌──────────────────┐   ┌──────────────────────────┐
+                        │ .manteka/memory/ │   │      packager/          │
+                        │ lineage.ndjson   │   │ tree-sitter · tokenize  │
+                        │ (append-only)    │   │ → xml/md/json/plain     │
+                        └──────────────────┘   └──────────────────────────┘
+
+   ┌────────────────────────────────────────────────────────────────────────┐
+   │                              mcp/                                       │
+   │                                                                        │
+   │   ┌──────────────────────┐        ┌──────────────────────────────┐    │
+   │   │  server.ts           │        │  mcpServer.ts                 │    │
+   │   │  Native JSON-RPC 2.0 │        │  @modelcontextprotocol/sdk   │    │
+   │   │  over stdio          │        │  + tools/ (19 registered)    │    │
+   │   │  registerToolHandler │        │  registerTool                │    │
+   │   └──────────┬───────────┘        └──────────────┬───────────────┘    │
+   │              │                                   │                    │
+   │              └────────────► tools.ts ◄──────────┘                    │
+   │                          (single registry,                           │
+   │                           shared by both servers)                     │
+   └────────────────────────────────────────────────────────────────────────┘
 ```
 
-Once you have generated the packed file, you can use it with Generative AI tools like ChatGPT, DeepSeek, Perplexity, Gemini, Gemma, Llama, Grok, and more.
+Three design points the diagram encodes:
 
-## 🐳 Docker Usage
+1. **`core/` is the shared floor.** The Smart-Slice engine, the analyzer and the doctor
+   checks are each implemented once and imported by both the CLI and the MCP layer — no
+   duplicated formatter, no `mcp → cli` import inversion.
+2. **Two MCP servers, one registry.** `server.ts` is a dependency-free native JSON-RPC
+   implementation; `mcpServer.ts` wraps the official SDK. `tools.ts` holds the single tool
+   registry, with `registerMantekaToolsForSdk` adapting handlers onto the SDK API.
+3. **Memory is append-only.** `lineage.ndjson` records every mutation decision, making
+   evolution traceable after the fact.
+
+---
+
+## 📦 Output Formats
+
+`--style <type>` selects the packed document format:
+
+| Style | Use |
+|---|---|
+| `xml` *(default)* | Best for LLM consumption; structured `<file>` elements |
+| `markdown` | Human-readable, renders in most viewers |
+| `json` | Programmatic post-processing |
+| `plain` | Raw concatenation |
+
+Useful extras: `--output-show-line-numbers`, `--remove-comments`,
+`--remove-empty-lines`, `--truncate-base64`, `--split-output 2mb`,
+`--parsable-style` (escapes characters that would break XML/markdown),
+`--header-text`, `--instruction-file-path`.
+
+---
+
+## 🐳 Docker
 
 ```bash
-# Basic usage (current directory)
 docker run -v .:/app -it --rm ghcr.io/martillohamer/manteka-repomix
-
-# Pack specific directory
-docker run -v .:/app -it --rm ghcr.io/martillohamer/manteka-repomix path/to/directory
-
-# Process remote repository to output directory
-docker run -v ./output:/app -it --rm ghcr.io/martillohamer/manteka-repomix --remote https://github.com/martillohamer/manteka-repomix
+docker run -v ./out:/app -it --rm ghcr.io/martillohamer/manteka-repomix --remote martillohamer/manteka-repomix
 ```
+
+---
 
 ## 💡 Prompt Examples
 
-### Code Review and Refactoring
-
-```
-This file contains my entire codebase. Please review the overall structure and suggest any improvements or refactoring opportunities, focusing on maintainability and scalability.
-```
-
-### Documentation Generation
-
-```
-Based on the codebase in this file, please generate a detailed README.md that includes an overview of the project, its main features, setup instructions, and usage examples.
+**Code review**
+```text
+This file contains my entire codebase. Review the overall structure and suggest
+improvements to maintainability and scalability.
 ```
 
-### Test Case Generation
-
+**Focused review (recommended)** — use the slice export so the agent sees only what matters:
+```bash
+node bin/manteka.cjs slice src/services/checkout.ts --export markdown --out ctx/checkout.md
 ```
-Analyze the code in this file and suggest a comprehensive set of unit tests for the main functions and classes. Include edge cases and potential error scenarios.
-```
-
-### Code Quality Assessment
-
-```
-Review the codebase for adherence to coding best practices and industry standards. Identify areas where the code could be improved in terms of readability, maintainability, and efficiency. Suggest specific changes to align the code with best practices.
+```text
+Here is the complete dependency closure of src/services/checkout.ts. Review it for
+race conditions in the payment flow. Do not speculate about code outside this context.
 ```
 
-### Library Overview
-
+**Test generation**
+```text
+Analyze the code in this file and suggest a comprehensive set of unit tests, including
+edge cases and error scenarios.
 ```
-This file contains the entire codebase of library. Please provide a comprehensive overview of the library, including its main purpose, key features, and overall architecture.
-```
 
-## 📡 MCP Server Integration
+---
 
-Manteka Repomix supports the [Model Context Protocol (MCP)](https://modelcontextprotocol.io), allowing AI assistants to directly interact with your codebase.
+## 🧪 Quality Gates
 
 ```bash
-repomix --mcp
+npm run build      # tsc -p tsconfig.build.json  → 0 errors
+npm run lint-ts    # tsc --noEmit                → 0 errors
+npx vitest run     # 2371 passed · 0 failed · 18 skipped
 ```
 
-### Sandbox Mode
+The 18 skipped tests are deliberate and itemised in [`HANDOFF.md`](HANDOFF.md#11-on-the-18-skipped-tests).
+That document also records the architectural decisions, the seven runtime bugs the
+type errors surfaced, and the known gaps.
 
-By default the MCP server can read any path the host user can. Confine it with `--sandbox`:
+---
 
-```bash
-# Confine to current working directory
-repomix --mcp --sandbox
+## 🤝 Contributing
 
-# Confine to specific directory
-repomix --mcp --sandbox path/to/project
+1. **Open an issue first** for anything beyond a trivial fix, so the approach can be
+   agreed before the work.
+2. **Branch** from `main`: `git checkout -b feat/your-change`.
+3. **Keep all three gates green** before opening a PR — CI will run the same three.
+4. **Match the surrounding code.** Type-only imports under `verbatimModuleSyntax`,
+   `node:path` for all path work, zero new runtime dependencies in `core/`.
+5. **Add tests for behaviour changes**, not just for new exports.
+6. **Write the reasoning, not just the diff** — commit bodies use typed action lines
+   (`intent(scope):`, `decision(scope):`, `rejected(scope):`, `constraint(scope):`,
+   `learned(scope):`) so the next engineer knows *why*, not only *what*.
+7. **Document the constraints you discovered.** If something bit you and would bite
+   anyone else, it belongs in `HANDOFF.md`.
+
+### Project layout
+
+```text
+src/
+├── cli/          # two entry points: repomix (cliRun.ts) and manteka (index.ts)
+├── core/         # analyze · doctor · smartSlice — shared by CLI and MCP
+├── mcp/          # native JSON-RPC server, SDK server, shared tool registry
+├── swarm/        # consensus orchestrator, event bus, specialised agents
+├── memory/       # NDJSON lineage store + vectorizer
+├── hooks/        # mutation operators, quality gate
+└── healer/       # diagnose → patch loop
 ```
 
-### Configuring MCP Servers
-
-#### For VS Code
-
-```bash
-# Install via badge
-[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=manteka-repomix&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22github%3Amartillohamer%2Fmanteka-repomix%22%2C%22--mcp%22%5D%7D)
-
-# Via command line
-code --add-mcp '{"name":"manteka-repomix","command":"npx","args":["-y","github:martillohamer/manteka-repomix","--mcp"]}'
-```
-
-#### For Cline
-
-```json
-{
-  "mcpServers": {
-    "manteka-repomix": {
-      "command": "npx",
-      "args": ["-y", "github:martillohamer/manteka-repomix", "--mcp"]
-    }
-  }
-}
-```
-
-#### For Claude Code
-
-```bash
-claude mcp add manteka-repomix -- npx -y github:martillohamer/manteka-repomix --mcp
-```
-
-### Available MCP Tools
-
-1. **pack_codebase** - Package a local code directory into consolidated XML for AI analysis
-2. **attach_packed_output** - Attach existing packed output file for AI analysis
-3. **pack_remote_repository** - Fetch, clone and package a GitHub repository
-4. **read_repomix_output** - Read contents of generated output file
-5. **grep_repomix_output** - Search for patterns in output file with RegExp
-6. **file_system_read_file** - Read file inside sandbox workspace (sandbox mode)
-7. **file_system_read_directory** - List directory contents (sandbox mode)
-
-## 🧠 Manteka Memory Stream (MCP Tools)
-
-Integrated memory stream and context persistence suite for long-running AI sessions:
-
-1. **`manteka_get_context`** - Generates smart-slice context representation for target file
-2. **`manteka_store_note`** - Persists session notes, design decisions, context memos
-3. **`manteka_search_memory`** - Performs keyword searches across all stored notes
-
-## 🤖 Autonomous Workflow
-
-1. **Diagnóstico:** `manteka doctor` - Verificar salud del sistema
-2. **Memoria:** `manteka serve` - Iniciar servidor MCP para herramientas remotas
-3. **Evolución:** Usar tools `manteka_heal`, `manteka_swarm_query`, etc. mediante JSON-RPC 2.0
-4. **Quality Gates:** El sistema auto-evalúa la calidad de transforms via SONA/MoE learning
-
-## 📁 File Structure
-
-```
-manteka-repomix/
-├── src/
-│   ├── cli/              # Interactive CLI (7 commands registered)
-│   ├── mcp/              # Native MCP server (stdio transport)
-│   ├── swarm/            # Swarm orchestrator (consensus protocols)
-│   ├── memory/           # Vector lineage store (HNSW index)
-│   ├── hooks/            # Quality gates / semantic hooks
-│   └── core/smartSlice/  # Smart-Slice dependency engine
-├── tests/
-│   ├── cli/              # CLI tests (23/23 passing ✅)
-│   ├── e2e/              # E2E integration tests
-│   ├── memory/           # Memory subsystem tests
-│   └── mcp/              # MCP server tests (9/9 passing ✅)
-├── HANDOFF.md            # Architectural documentation
-├── README.md             # Project overview & quick start
-├── package.json          # Dependencies and scripts
-├── tsconfig.json         # TypeScript strict config
-├── .manteka/             # Internal runtime state
-└── .claude/              # Claude Code integration
-```
+---
 
 ## 📜 License
 
-[MIT](LICENSE) - Copyright (c) 2026 Manteka Repomix
+[MIT](LICENSE). Copyright (c) 2024 Kazuki Yamada.
 
-## 📞 Contact & Support
+---
 
-- **Repository:** https://github.com/martillohamer/manteka-repomix
-- **Author:** martillohamer
-- **Version:** 1.18.1-manteka.1
-
-**Philosophy:** Manteka believes in autonomous, safe and transparent code evolution. Every line of code, every decision and every mutation is documented and traceable through the ancestry line and memory store system.
-
-> *"Code must not only work - it must evolve toward better versions of itself."*
-
-*Last updated: 2026-10-12 | Test Suite: 195/195 files, 2332/2332 tests (100%) | Production Ready*
+<div align="center">
+  <sub>Built with the principle that code should not only work — it should evolve toward better versions of itself.</sub>
+</div>
