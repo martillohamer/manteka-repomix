@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791835616413,
+  "lastUpdate": 1791837339019,
   "repoUrl": "https://github.com/martillohamer/manteka-repomix",
   "entries": {
     "Repomix Performance": [
@@ -90,6 +90,51 @@ window.BENCHMARK_DATA = {
             "range": "±102",
             "unit": "ms",
             "extra": "Median of 20 runs\nQ1: 1486ms, Q3: 1588ms\nAll times: 1458, 1471, 1471, 1479, 1481, 1486, 1486, 1500, 1503, 1505, 1506, 1509, 1513, 1532, 1549, 1588, 1706, 1715, 1727, 1736ms"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "martillohamer@users.noreply.github.com",
+            "name": "martillohamer",
+            "username": "martillohamer"
+          },
+          "committer": {
+            "email": "martillohamer@users.noreply.github.com",
+            "name": "martillohamer",
+            "username": "martillohamer"
+          },
+          "distinct": true,
+          "id": "9c31e834cf2b2b69200c501610a6705bd8b9e430",
+          "message": "docs: rewrite README and HANDOFF for the post-expansion CLI, fix dispatcher drift\n\nintent(documentation): HANDOFF and README still advertised 195/195 files and 2332/2332 tests\nfrom before the CLI/MCP expansion, and carried claims that had become false. Correcting the\nrecord matters more than the prose, since these are the documents a new maintainer trusts.\nfix(dispatcher): createMantekaProgram() and main() are separate wiring paths and had drifted —\n`manteka inspect` printed a placeholder, `manteka doctor` ran a second older implementation,\nand `manteka slice` was absent from the switch entirely (Unknown command). All three were\ngreen in tests because the tests only exercise the Commander side\nlearned(cli-wiring): a subcommand registered on the Commander program is NOT reachable from\nthe binary; every new subcommand must be added to both, and verified through bin/manteka.cjs\nfix(doctor-exit-code): runDoctor exited 1 whenever any check was not `ok`, i.e. also on\nwarnings. \"lineage file not found\" and \"server.json missing serverName\" are normal states, so\nthe command returned 1 on a healthy checkout and was unusable as a CI gate; now exits non-zero\nonly on a hard `fail`, with a distinct 🔴 summary line\nrefactor(cli-reporting): inspect and doctor now share one implementation between the Commander\naction and main(), so both paths print identical output instead of drifting again\nfix(inspect): export listMcpTools/printMcpInspection/runInspectCommand instead of inlining the\nregistry walk in the action, matching the analyze/printAnalysisReport pattern\nfix(slice): add runSliceCommand so the dispatcher can reach it; it reconstructs --export/--out/\n--depth from raw argv and reuses assertSliceExportFormat, so an unsupported format still exits\nnon-zero rather than defaulting\n\ndocs: corrected three false claims rather than carrying them forward — runtime dependencies are\n29 (including @modelcontextprotocol/sdk, imported by mcpServer.ts), not zero; src/ has 8 `any`\nand 2 `!` assertions, not none; and the 18 skipped tests are deliberate per-file cases, not the\n\"Vitest module-caching artifact\" previously claimed. The 100% badge now reads \"2371 passing ·\n0 failed\" because no coverage measurement exists to back a coverage claim. License now matches\nLICENSE (2024 Kazuki Yamada), and the MCP tool list is complete at 19 (11 sandboxed).\ndocs: added README architecture diagram, 60-second quickstart, RAG export format comparison\n(markdown/json/xml), and a Known Gaps section stating what is not done — dashboard unimplemented,\nlongest-path depth, literal import resolution, no alias support, and no CI enforcing these gates\n\nnpm run build: 0 errors | npm run lint-ts: 0 errors | vitest: 198 files, 2371/2371 passing",
+          "timestamp": "2026-10-12T22:33:24+02:00",
+          "tree_id": "429bf23d9572f35c9e4a87d1f73523b8db39f6a8",
+          "url": "https://github.com/martillohamer/manteka-repomix/commit/9c31e834cf2b2b69200c501610a6705bd8b9e430"
+        },
+        "date": 1791837338454,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "Repomix Pack (macOS)",
+            "value": 738,
+            "range": "±34",
+            "unit": "ms",
+            "extra": "Median of 30 runs\nQ1: 720ms, Q3: 754ms\nAll times: 688, 692, 695, 704, 707, 718, 719, 720, 722, 729, 731, 731, 734, 735, 736, 738, 745, 745, 746, 749, 750, 752, 754, 762, 763, 764, 779, 796, 797, 829ms"
+          },
+          {
+            "name": "Repomix Pack (Linux)",
+            "value": 1082,
+            "range": "±58",
+            "unit": "ms",
+            "extra": "Median of 20 runs\nQ1: 1079ms, Q3: 1137ms\nAll times: 1064, 1072, 1075, 1076, 1078, 1079, 1080, 1081, 1081, 1082, 1082, 1084, 1089, 1102, 1114, 1137, 1175, 1245, 1292, 1296ms"
+          },
+          {
+            "name": "Repomix Pack (Windows)",
+            "value": 1403,
+            "range": "±16",
+            "unit": "ms",
+            "extra": "Median of 20 runs\nQ1: 1396ms, Q3: 1412ms\nAll times: 1371, 1389, 1389, 1390, 1391, 1396, 1396, 1401, 1403, 1403, 1403, 1403, 1404, 1407, 1408, 1412, 1427, 1429, 1444, 1465ms"
           }
         ]
       }
