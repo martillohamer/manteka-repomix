@@ -328,7 +328,7 @@ Honest list of what is *not* done:
   the analyzer matches the specifier against the filesystem with no extension inference.
 - **Alias specifiers** (`@/components/…`) are not resolved by the analyzer.
 - **18 skipped tests**, itemised in §1.1.
-- **No CI workflow** enforces these three gates; they are currently run by hand.
+- **CI**: GitHub Actions workflow `.github/workflows/ci.yml` runs on push to `main` and on PRs (lint-biome, lint-oxlint, lint-ts, lint-secretlint; tests matrix across Ubuntu/Windows/macOS on Node 22.x/24.x/26.x; test-coverage; build-and-run across matrix; and Bun variants). The three gates `npm run build`, `npm run lint-ts`, and `vitest run` are enforced in the relevant jobs.
 
 ---
 
