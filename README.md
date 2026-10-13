@@ -455,3 +455,8 @@ src/
 <div align="center">
   <sub>Built with the principle that code should not only work — it should evolve toward better versions of itself.</sub>
 </div>
+
+## Resources
+
+- [📊 Executive Slide Deck](PRESENTATION.md)
+
